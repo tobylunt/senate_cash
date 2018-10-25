@@ -1,2 +1,11 @@
 # ignore API key file
 os_apikey.txt
+
+# django stuff
+*.pyc
+*~
+__pycache__
+myvenv
+db.sqlite3
+/static
+.DS_Store
