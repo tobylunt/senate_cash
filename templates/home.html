@@ -3,8 +3,13 @@
 <meta charset="utf-8">
 <html>
 
-  {% load static %}
+  {% load staticfiles %}
 
+  <!-- load d3 and topojson  -->  
+  <script src="//d3js.org/d3.v3.min.js"></script>
+  <script src="//d3js.org/topojson.v1.min.js"></script>
+
+  <!-- set some css  -->  
   <style>
   .background {
     fill: none;
@@ -32,134 +37,13 @@
   </head>
 
   <body>
-    <script src="//d3js.org/d3.v3.min.js"></script>
-    <script src="//d3js.org/topojson.v1.min.js"></script>
+    <!-- add the d3 to the body  -->  
+    <script type="text/javascript" src="{% static 'map.js' %}"> </script>
+
+    <!-- add the us.json map element  
     <script>
-    var width = 960,
-        height = 500,
-        active = d3.select(null);
-
-    var projection = d3.geo.albersUsa()
-        .scale(1000)
-        .translate([width / 2, height / 2]);
-
-    var zoom = d3.behavior.zoom()
-        .translate([0, 0])
-        .scale(1)
-        .scaleExtent([1, 8])
-        .on("zoom", zoomed);
-
-    var path = d3.geo.path()
-        .projection(projection);
-
-    var svg = d3.select("body").append("svg")
-        .attr("width", width)
-        .attr("height", height)
-        .on("click", stopped, true);
-
-    svg.append("rect")
-        .attr("class", "background")
-        .attr("width", width)
-        .attr("height", height)
-        .on("click", reset);
-
-    var g = svg.append("g");
-    
-
-    // CIRCLE PLAYGROUND
-    var jsonCircles = [
-      { "x_axis": 85, "y_axis": 30, "radius": 80, "color" : "blue" },
-      { "x_axis": -85, "y_axis": 100, "radius": 80, "color" : "red"}];
-
-//    var rect = d3.select('svg g rect'); // see: https://stackoverflow.com/questions/27009672/adding-a-button-to-a-g-element-using-d3
-//    rect.on('click', function() {
-//     console.log('i was clicked');
-//    });
-//    g.tooltip = d3.select("body") // see: https://stackoverflow.com/questions/19008901/d3-events-how-to-allow-button-click-in-d3-element
-//    .append("div")
-//    .attr("class", "tooltip")
-//    .style("opacity", 0);
-    // END CIRCLE PLAYGROUND
-
-    
-    svg
-        .call(zoom) // delete this line to disable free zooming
-        .call(zoom.event);
-
-    d3.json("{% static "map/us.json" %}", function(error, us) { // static stuff gets us to the json map in django
+      d3.json("{% static 'us.json' %}", function(error, us) { 
       if (error) throw error;
-
-      g.selectAll("path")
-          .data(topojson.feature(us, us.objects.states).features)
-          .enter().append("path")
-          .attr("d", path)
-          .attr("class", "feature")
-          .on("click", clicked);
-    
-      g.append("path")
-          .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
-          .attr("class", "mesh")
-          .attr("d", path);
-    });
-
-
-
-
-
-
-
-    
-    function clicked(d) {
-      if (active.node() === this) return reset();
-      active.classed("active", false);
-      active = d3.select(this).classed("active", true); // set the element to be active/inactive on click(s)
-
-      // set the scaling and transition on click
-      var bounds = path.bounds(d),
-          dx = bounds[1][0] - bounds[0][0],
-          dy = bounds[1][1] - bounds[0][1],
-          x = (bounds[0][0] + bounds[1][0]) / 2,
-          y = (bounds[0][1] + bounds[1][1]) / 2,
-          scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / width, dy / height))),
-          translate = [width / 2 - scale * x, height / 2 - scale * y];
-
-      svg.transition()
-          .duration(1250) // duration from "off" to "on"
-          .call(zoom.translate(translate).scale(scale).event);
-
-    // NEW
-    g.selectAll("circle")
-      .data(jsonCircles)
-      .enter()
-      .append("circle")
-      .attr("cx", function (d) { return d.x_axis/scale + x; })
-      .attr("cy", y)
-      .attr("r", function (d) { return d.radius / scale; })
-      .style("fill", function(d) { return d.color; })
-      .style("opacity", .5);
-    }
-    // END NEW
-
-    function reset() {
-      active.classed("active", false);
-      active = d3.select(null);
-
-      svg.transition()
-          .duration(1250) // duration from "on" to "off"
-          .call(zoom.translate([0, 0]).scale(1).event);
-    }
-
-    // zooming function
-    function zoomed() {
-      g.style("stroke-width", 1.5 / d3.event.scale + "px"); // keeps stroke width constant
-      g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")"); // zooms
-    }
-
-    // If the drag behavior prevents the default click,
-    // also stop propagation so we don’t click-to-zoom.
-    function stopped() {
-      if (d3.event.defaultPrevented) d3.event.stopPropagation();
-    }
-
-  </script>
+    </script>-->
+  </body>
 </html>

@@ -21,3 +21,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('map.urls')), # new
 ]
+
+#urlpatterns = [
+#    url(r'^admin/', include(admin.site.urls)),
+#]
