@@ -10,28 +10,7 @@
   <script src="//d3js.org/topojson.v1.min.js"></script>
 
   <!-- set some css  -->  
-  <style>
-  .background {
-    fill: none;
-    pointer-events: all;
-  }
-
-  .feature {
-    fill: #ececec;
-    cursor: pointer;
-  }
-
-  .feature.active {
-    fill: #3e3ede;
-  }
-
-  .mesh {
-    fill: none;
-    stroke: #fff;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-  </style>
+  <link rel="stylesheet" href="{% static 'style.css' %}">
     
   <head>
   </head>
@@ -39,11 +18,5 @@
   <body>
     <!-- add the d3 to the body  -->  
     <script type="text/javascript" src="{% static 'map.js' %}"> </script>
-
-    <!-- add the us.json map element  
-    <script>
-      d3.json("{% static 'us.json' %}", function(error, us) { 
-      if (error) throw error;
-    </script>-->
   </body>
 </html>
