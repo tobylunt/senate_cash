@@ -28,20 +28,21 @@ svg.append("rect")
     .attr("height", height)
     .on("click", reset);
 
+// append a "g" element (grouping) to the svg
 var g = svg.append("g");
-
 
 // CIRCLE PLAYGROUND
 var jsonCircles = [
     { "x_axis": 85, "y_axis": 30, "radius": 80, "color" : "blue" },
     { "x_axis": -85, "y_axis": 100, "radius": 80, "color" : "red"}];
-// END CIRCLE PLAYGROUND
 
 svg
     .call(zoom) // delete this line to disable free zooming
+    .on("dblclick.zoom", null) // prevent double-click zooming
     .call(zoom.event);
 
-d3.json("/static/us.json", function(error, us) { // bring json map into django - N.B. hardcoded location
+// bring json map into django - N.B. hardcoded location
+d3.json("/static/us.json", function(error, us) { 
     if (error) throw error;
 
     g.selectAll("path")
@@ -78,7 +79,7 @@ function clicked(d) {
         .duration(1250) // duration from "off" to "on"
         .call(zoom.translate(translate).scale(scale).event);
 
-    // NEW - add circle pairs on click of states
+    // add circle pairs on click of states
     g.selectAll("circle")
 	.data(jsonCircles)
 	.enter()
@@ -122,7 +123,10 @@ function senator_clicked(d) {
     activesen.classed("active_sen", false); // make "activesen" selection inactive - i.e. if you click between two senators in the same state
     activesen = d3.select(this).classed("active_sen", true); // make this selection have "active_sen" class and store selection
 
-    // here we want to include the code for the sunburst
+    ///////////////////////////
+    // code for the sunburst //
+    ///////////////////////////
+    
     
 //    // if activating, select the clicked element and make it opaque
 //    d3.select(this)
