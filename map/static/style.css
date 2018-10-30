@@ -1,0 +1,35 @@
+/*
+styles for senate cash mapping
+author: tobias lunt
+*/
+
+.background {
+    fill: none;
+    pointer-events: all;
+}
+
+.feature {
+    fill: #ececec;
+    cursor: pointer;
+}
+
+.feature.active {
+    fill: #3e3ede;
+}
+
+.mesh {
+    fill: none;
+    stroke: #fff;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.senate_center {
+    opacity: .5; 
+
+}
+
+.senate_center.active_sen {
+    opacity: 1;
+    fill: none;
+}
