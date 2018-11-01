@@ -34,3 +34,14 @@ author: tobias lunt
     fill: none;
 }
 
+/* sunburst introspection sizing */
+#introspect {
+  width: 600px;
+  height: 70px;
+}
+
+/* sunburst introspection text */
+#introspect text {
+  font-weight: 600;
+  fill: #fff;
+}

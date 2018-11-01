@@ -160,7 +160,7 @@ function createSunburst(json) {
     var color = d3.scale.category20c();
 
     // create the sunburst svg
-    var svgSunburst = d3.select("body").append("svg")
+    var svgSunburst = d3.select("#map").append("svg")
         .attr("width", width)
         .attr("height", height)
         .attr("svg_type", "sunburst") 

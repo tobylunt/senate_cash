@@ -18,19 +18,29 @@
   <h1>Title Placeholder</h1>
   <body>
 
-    <!-- this div will contain the header SVG, and radio button form -->
-    <div class="headerDiv">
-
-      <!-- radio buttons for switching between size/count, or contribs/PACs? -->  
-      <!-- https://jsfiddle.net/unklefolk/nyaw6nje/  -->      
-      <form>
-	<label><input type="radio" name="mode" value="size"> Size</label>
-	<label><input type="radio" name="mode" value="count" checked> Count</label>
-      </form>
-    </div>
+    <!-- main div to include header and map -->
+    <div id="main">
     
-    <!-- add the d3 to the body  -->  
-    <script type="text/javascript" src="{% static 'map.js' %}"> </script>
+      <!-- this div will contain the header SVG, and radio button form -->
+      <div id="introspect">
+
+        <!-- radio buttons for switching between size/count, or contribs/PACs? -->  
+        <!-- https://jsfiddle.net/unklefolk/nyaw6nje/  -->      
+        <form>
+  	<label><input type="radio" name="mode" value="size"> Size</label>
+  	<label><input type="radio" name="mode" value="count" checked> Count</label>
+        </form>
+      </div>
+
+      <!-- this div will contain the map -->
+      <div id="map">
+
+	<!-- add the d3 to the map's div -->  
+	<script type="text/javascript" src="{% static 'map.js' %}"> </script>
+      </div>
+      
+    </div> 	<!-- end main div -->  
+    
   </body>
 
 </html>
