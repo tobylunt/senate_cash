@@ -33,3 +33,7 @@ author: tobias lunt
     opacity: 1;
     fill: none;
 }
+
+path[node_depth = "3"] {
+    opacity: .25;
+}
