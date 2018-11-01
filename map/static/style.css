@@ -42,6 +42,7 @@ author: tobias lunt
 
 /* sunburst introspection text */
 #introspect text {
-  font-weight: 600;
-  fill: #fff;
+  font-weight: 500;
+  fill: #000000;
+  font-family: "Courier New", Times, serif;
 }

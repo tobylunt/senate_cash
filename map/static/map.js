@@ -142,6 +142,11 @@
 //
 
 
+// Breadcrumb dimension settings
+var b = {
+  w: 200, h: 30, s: 3, t: 10
+};
+
 // Main function to draw and set up sunburst visualization, passing in json data.
 function createSunburst(json) {
 
@@ -159,6 +164,9 @@ function createSunburst(json) {
     // set colors
     var color = d3.scale.category20c();
 
+    // Basic setup of page elements.
+    initializeBreadcrumbTrail();
+
     // create the sunburst svg
     var svgSunburst = d3.select("#map").append("svg")
         .attr("width", width)
@@ -174,7 +182,15 @@ function createSunburst(json) {
         .attr("width", width)
         .attr("height", height)
         .attr("opacity", 0)
+    	.attr("id", "bgRect")
+        .on("mouseover", mouseleave) // clear opacity and breadcrumbs
         .on("click", sunburstRemove); // clear the SVG entirely on background click
+
+//    // Bounding circle underneath the sunburst, to make it easier to detect
+//    // when the mouse leaves the parent g.
+//    svgSunburst.append("svg:circle")
+//	.attr("r", radius)
+//	.style("opacity", 0);
 
     // helper function for killing sunburst SVG
     function sunburstRemove() {
@@ -225,9 +241,143 @@ function createSunburst(json) {
         .attr("d", arc)
         .attr("node_depth", function(d) { return getNodeDepth(d)}) // assign node depth to path class
         .style("fill", function(d) { return color(getRootmostAncestorByRecursion(d).name); })
-        .style("opacity", function(d) { return getNodeDepth(d) == 0 ? 0 : getNodeDepth(d)/ Math.pow(getNodeDepth(d),2); }) // make opacity dependent on node depth
+        .style("opacity", function(d) { return getNodeDepth(d) == 0 ? 0 : getNodeDepth(d) / Math.pow(getNodeDepth(d),2); }) // make opacity dependent on node depth
         .on("click", click)
+    	.on("mouseover", mouseover) // this creates the breadcrumbs
         .each(stash);
+    
+    // Fade all but the current sequence, and show it in the breadcrumb trail.
+    function mouseover(d) {
+
+	if(d3.select(this).style("opacity") != 0) {
+
+	    // add up all child node sizes with present node for total value at this point in the tree
+    	    var totSum = d.value; 
+
+    	    var sequenceArray = getAncestors(d);
+	    updateBreadcrumbs(sequenceArray, totSum);
+
+	    // Fade all the segments by half
+	    d3.selectAll("path")
+	        .style("opacity", function(d) { return (getNodeDepth(d) / Math.pow(getNodeDepth(d),2)) / 2; })
+
+	    // Then highlight only those that are an ancestor of the current segment.
+	    svgSunburst.selectAll("path")
+	        .filter(function(node) {
+	            return (sequenceArray.indexOf(node) >= 0);
+	        })
+	        .style("opacity", 1);
+	}
+
+	if(d3.select(this).style("opacity") == 0) { // make center node deactivite breadcrumbs as well
+	    mouseleave();
+	}
+
+    }
+    
+    // Restore everything to full opacity when moving off the visualization.
+    function mouseleave(d) {
+
+	// Hide the breadcrumb trail
+	d3.select("#trail")
+            .style("visibility", "hidden");
+
+	// Deactivate all segments during transition.
+	d3.selectAll("path").on("mouseover", null);
+
+	// Transition each segment to full opacity and then reactivate it.
+	d3.selectAll("path")
+            .transition()
+            .duration(500)
+	    .style("opacity", function(d) { return getNodeDepth(d) / Math.pow(getNodeDepth(d),2); })
+            .each("end", function() {
+                d3.select(this).on("mouseover", mouseover);
+            });
+    }
+
+    // Given a node in a partition layout, return an array of all of its ancestor
+    // nodes, highest first, but excluding the root.
+    function getAncestors(node) {
+	var path = [];
+	var current = node;
+	while (current.parent) {
+            path.unshift(current);
+            current = current.parent;
+	}
+	return path;
+    }
+
+    function initializeBreadcrumbTrail() {
+
+	// Add the svg area.
+	var trail = d3.select("#introspect").append("svg:svg")
+            .attr("width", width)
+            .attr("height", 50)
+            .attr("id", "trail");
+	// Add the label at the end, for the percentage.
+	trail.append("svg:text")
+            .attr("id", "endlabel")
+            .style("fill", "#000");
+    }
+
+    // Generate a string that describes the points of a breadcrumb polygon.
+    function breadcrumbPoints(d, i) {
+	var points = [];
+	points.push("0,0");
+	points.push(b.w + ",0");
+	points.push(b.w + b.t + "," + (b.h / 2));
+	points.push(b.w + "," + b.h);
+	points.push("0," + b.h);
+	if (i > 0) { // Leftmost breadcrumb; don't include 6th vertex.
+            points.push(b.t + "," + (b.h / 2));
+	}
+	return points.join(" ");
+    }
+
+    // Update the breadcrumb trail to show the current sequence and percentage.
+    function updateBreadcrumbs(nodeArray, sumString) {
+
+	// Data join; key function combines name and depth (= position in sequence).
+	var g = d3.select("#trail")
+            .selectAll("g")
+            .data(nodeArray, function(d) { return d.name + d.depth; });
+
+	// Add breadcrumb and label for entering nodes.
+	var entering = g.enter().append("svg:g");
+
+	entering.append("svg:polygon")
+            .attr("points", breadcrumbPoints)
+            .style("fill", function(d) { return color(getRootmostAncestorByRecursion(d).name); })
+            .style("opacity", function(d) { return getNodeDepth(d) == 0 ? 0 : getNodeDepth(d) / Math.pow(getNodeDepth(d),2); }) // make opacity dependent on node depth
+
+	entering.append("svg:text")
+            .attr("x", (b.w + b.t) / 2)
+            .attr("y", b.h / 2)
+            .attr("dy", "0.35em")
+            .attr("text-anchor", "middle")
+            .text(function(d) { return d.name; });
+
+	// Set position for entering and updating nodes.
+	g.attr("transform", function(d, i) {
+            return "translate(" + i * (b.w + b.s) + ", 0)";
+	});
+
+	// Remove exiting nodes.
+	g.exit().remove();
+
+	// Now move and update the percentage at the end.
+	d3.select("#trail").select("#endlabel")
+            .attr("x", (nodeArray.length + 0.5) * (b.w + b.s))
+            .attr("y", b.h / 2)
+            .attr("dy", "0.35em")
+            .attr("text-anchor", "middle")
+            .text(sumString);
+
+	// Make the breadcrumb trail visible, if it's hidden.
+	d3.select("#trail")
+            .style("visibility", "");
+
+    }
 
     // using radio buttons to swap between data attributes?
     d3.selectAll("input").on("change", function change() {
@@ -249,6 +399,9 @@ function createSunburst(json) {
     	.duration(1000)
     	.attrTween("d", arcTweenZoom(d));
     }
+
+    // Add the mouseleave handler to the bounding circle.
+    d3.select("#bgRect").on("mouseleave", mouseleave);
 
     d3.select(self.frameElement).style("height", height + "px");
 
@@ -338,3 +491,5 @@ function getData() {
 root = getData();
 
 createSunburst(root);
+
+
