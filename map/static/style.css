@@ -34,6 +34,3 @@ author: tobias lunt
     fill: none;
 }
 
-path[node_depth = "3"] {
-    opacity: .25;
-}
