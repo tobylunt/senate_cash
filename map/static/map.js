@@ -268,11 +268,16 @@ function createSunburst(json) {
         .attr("id", "sunpath")
         .attr("node_depth", function(d) { return getNodeDepth(d)}) // assign node depth to path class
         .style("fill", function(d) { return color(getRootmostAncestorByRecursion(d).name); })
-//        .style("opacity", 0)
-        .style("opacity", function(d) { return getNodeDepth(d) == 0 ? 0 : getNodeDepth(d) / Math.pow(getNodeDepth(d),2); }) // make opacity dependent on node depth
+        .style("opacity", 0)
         .on("click", click)
     	.on("mouseover", mouseover) // this creates the breadcrumbs
         .each(stash);
+
+    svgSunburst.datum(json).selectAll("path")    
+	.transition()
+	.delay(function(d){ return 400; })
+        .duration(600)
+        .style("opacity", function(d) { return getNodeDepth(d) == 0 ? 0 : getNodeDepth(d) / Math.pow(getNodeDepth(d),2); }); // make opacity dependent on node depth
 
 //    var path = d3.selectAll("#sunpath")
 //	.transition()
