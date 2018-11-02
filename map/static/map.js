@@ -1,145 +1,168 @@
-//var width = 960,
-//    height = 500,
-//    active = d3.select(null);
-//    activesen = d3.select(null);
-//
-//var projection = d3.geo.albersUsa()
-//    .scale(1000)
-//    .translate([width / 2, height / 2]);
-//
-//var zoom = d3.behavior.zoom()
-//    .translate([0, 0])
-//    .scale(1)
-//    .scaleExtent([1, 8])
-//    .on("zoom", zoomed);
-//
-//var path = d3.geo.path()
-//    .projection(projection);
-//
-//var svg = d3.select("body").append("svg")
-//    .attr("width", width)
-//    .attr("height", height)
-//    .on("click", stopped, true);
-//
-//// background rectangle within the svg, that resets on click
-//svg.append("rect")
-//    .attr("class", "background")
-//    .attr("width", width)
-//    .attr("height", height)
-//    .on("click", reset);
-//
-//// append a "g" element (grouping) to the svg
-//var g = svg.append("g");
-//
-//// CIRCLE PLAYGROUND
-//var jsonCircles = [
-//    { "x_axis": 85, "y_axis": 30, "radius": 80, "color" : "blue" },
-//    { "x_axis": -85, "y_axis": 100, "radius": 80, "color" : "red"}];
-//
-//svg
-//    .call(zoom) // delete this line to disable free zooming
-//    .on("dblclick.zoom", null) // prevent double-click zooming
-//    .call(zoom.event);
-//
-//// bring json map into django - N.B. hardcoded location
-//d3.json("/static/us.json", function(error, us) { 
-//    if (error) throw error;
-//
-//    g.selectAll("path")
-//	.data(topojson.feature(us, us.objects.states).features)
-//	.enter().append("path")
-//	.attr("d", path)
-//	.attr("class", "feature")
-//	.on("click", clicked);
-//
-//    g.append("path")
-//	.datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
-//	.attr("class", "mesh")
-//	.attr("d", path);
-//});
-//
-//// clicked is the click engagement function for state features
-//function clicked(d) {
-//    if (active.node() === this) return reset(); // resets when you click on an active state
-//    g.selectAll("circle") // this makes the circles over a previously active state disappear when a new state is clicked
-//        .remove()
-//    active.classed("active", false); // this makes any other clicked state inactive when a new state is clicked
-//    active = d3.select(this).classed("active", true); // add "active" class to this selection, and store in reference named "active"
-//
-//    // set the scaling and transition on click
-//    var bounds = path.bounds(d),
-//	dx = bounds[1][0] - bounds[0][0],
-//	dy = bounds[1][1] - bounds[0][1],
-//	x = (bounds[0][0] + bounds[1][0]) / 2,
-//        y = (bounds[0][1] + bounds[1][1]) / 2,
+var width = 960,
+    height = 750,
+    radius = 80,
+    active = d3.select(null);
+    activesen = d3.select(null);
+
+var projection = d3.geo.albersUsa()
+    .scale(1000)
+    .translate([width / 2, height / 2]);
+
+var zoom = d3.behavior.zoom()
+    .translate([0, 0])
+    .scale(1)
+    .scaleExtent([1, 30])
+    .on("zoom", zoomed);
+
+var path = d3.geo.path()
+    .projection(projection);
+
+var svg = d3.select("#map").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .attr("id", "mapsvg")
+    .on("click", stopped, true);
+
+// background rectangle within the svg, that resets on click
+svg.append("rect")
+    .attr("class", "background")
+    .attr("width", width)
+    .attr("height", height)
+    .on("click", reset);
+
+// append a "g" element (grouping) to the svg
+var g = svg.append("g");
+
+// CIRCLE PLAYGROUND
+var jsonCircles = [
+    { "x_axis": 85, "y_axis": 30, "radius": radius, "color" : "blue" },
+    { "x_axis": -85, "y_axis": 100, "radius": radius, "color" : "red"}];
+
+svg
+    .call(zoom) // delete this line to disable free zooming
+    .on("dblclick.zoom", null) // prevent double-click zooming
+    .call(zoom.event);
+
+// bring json map into django - N.B. hardcoded location
+d3.json("/static/us.json", function(error, us) { 
+    if (error) throw error;
+
+    g.selectAll("path")
+	.data(topojson.feature(us, us.objects.states).features)
+	.enter().append("path")
+	.attr("d", path)
+	.attr("class", "feature")
+	.on("click", clicked);
+
+    g.append("path")
+	.datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
+	.attr("class", "mesh")
+	.attr("d", path);
+});
+
+// clicked is the click engagement function for state features
+function clicked(d) {
+    if (active.node() === this) return reset(); // resets when you click on an active state
+    g.selectAll("circle") // this makes the circles over a previously active state disappear when a new state is clicked
+        .remove()
+    active.classed("active", false); // this makes any other clicked state inactive when a new state is clicked
+    active = d3.select(this).classed("active", true); // add "active" class to this selection, and store in reference named "active"
+
+    // set the scaling and transition on click
+    var bounds = path.bounds(d),
+	dx = bounds[1][0] - bounds[0][0],
+	dy = bounds[1][1] - bounds[0][1],
+	x = (bounds[0][0] + bounds[1][0]) / 2,
+        y = (bounds[0][1] + bounds[1][1]) / 2,
+        scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / width, dy / height))),
+        translate = [width / 2 - scale * x, height / 2 - scale * y];
+
+    svg.transition()
+        .duration(1250) // duration from "off" to "on"
+        .call(zoom.translate(translate).scale(scale).event);
+
+    // add circle pairs on click of states
+    g.selectAll("circle")
+	.data(jsonCircles)
+	.enter()
+        .append("circle")
+        .attr("cx", function (d) { return d.x_axis/scale + x; })
+        .attr("cy", y)
+        .attr("r", function (d) { return d.radius / scale; })
+	.attr("class", "senate_center")
+        .style("fill", function(d) { return d.color; })
+    	.on("click", senator_clicked) // click function for circles
+}
+
+// unclick function for states
+function reset() {
+    active.classed("active", false); // makes "active" selection inactive
+    active = d3.select(null); // remove "active" selection
+
+    svg.transition()
+	.duration(1250) // duration from "on" to "off"
+	.call(zoom.translate([0, 0]).scale(1).event);
+
+    g.selectAll("circle")
+	.remove();
+}
+
+// zooming function
+function zoomed() {
+    g.style("stroke-width", 1.5 / d3.event.scale + "px"); // keeps stroke width constant
+    g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")"); // zooms
+}
+
+// If the drag behavior prevents the default click,
+// also stop propagation so we don’t click-to-zoom.
+function stopped() {
+    if (d3.event.defaultPrevented) d3.event.stopPropagation();
+}
+
+// click function for senators (circles)
+function senator_clicked(d) {
+    if (activesen.node() === this) return senator_reset(); // if this circle is already active and is clicked again, inactivate
+    activesen.classed("active_sen", false); // make "activesen" selection inactive - i.e. if you click between two senators in the same state
+    activesen = d3.select(this).classed("active_sen", true); // make this selection have "active_sen" class and store selection
+
+    // set the scaling and transition on click
+    var sen_bounds = d3.select('.active_sen').node().getBBox(),
+	sen_diam = sen_bounds.width, // same as sen_bounds.height, bc circle
+	sen_rad = sen_bounds.width / 2, 
+	sen_x = sen_bounds.x,
+    	sen_y = sen_bounds.y,
+	center_x = sen_x + sen_rad,
+	center_y = sen_y + sen_rad,
+	sen_scale = Math.max(1, Math.min(30, 0.5 / Math.max(sen_diam / width, sen_diam / height))),
+	sen_translate = [width / 2 - sen_scale * center_x, height / 2 - sen_scale *  center_y];
 //        scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / width, dy / height))),
 //        translate = [width / 2 - scale * x, height / 2 - scale * y];
-//
-//    svg.transition()
-//        .duration(1250) // duration from "off" to "on"
-//        .call(zoom.translate(translate).scale(scale).event);
-//
-//    // add circle pairs on click of states
-//    g.selectAll("circle")
-//	.data(jsonCircles)
-//	.enter()
-//        .append("circle")
-//        .attr("cx", function (d) { return d.x_axis/scale + x; })
-//        .attr("cy", y)
-//        .attr("r", function (d) { return d.radius / scale; })
-//	.attr("class", "senate_center")
-//        .style("fill", function(d) { return d.color; })
-//    	.on("click", senator_clicked) // click function for circles - not working yet
-//}
-//
-//// unclick function for states
-//function reset() {
-//    active.classed("active", false); // makes "active" selection inactive
-//    active = d3.select(null); // remove "active" selection
-//
-//    svg.transition()
-//	.duration(1250) // duration from "on" to "off"
-//	.call(zoom.translate([0, 0]).scale(1).event);
-//
-//    g.selectAll("circle")
-//	.remove();
-//}
-//
-//// zooming function
-//function zoomed() {
-//    g.style("stroke-width", 1.5 / d3.event.scale + "px"); // keeps stroke width constant
-//    g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")"); // zooms
-//}
-//
-//// If the drag behavior prevents the default click,
-//// also stop propagation so we don’t click-to-zoom.
-//function stopped() {
-//    if (d3.event.defaultPrevented) d3.event.stopPropagation();
-//}
-//
-//// click function for senators (circles)
-//function senator_clicked(d) {
-//    if (activesen.node() === this) return senator_reset(); // if this circle is already active and is clicked again, inactivate
-//    activesen.classed("active_sen", false); // make "activesen" selection inactive - i.e. if you click between two senators in the same state
-//    activesen = d3.select(this).classed("active_sen", true); // make this selection have "active_sen" class and store selection
-//
-//    ///////////////////////////
-//    // code for the sunburst //
-//    ///////////////////////////
-//
-//    
-//    
-////    // if activating, select the clicked element and make it opaque
-////    d3.select(this)
-////        .style("opacity", 1);
-//}
-//
-//// unclick function for senator circles
-//function senator_reset() {
-//    activesen.classed("active_sen", false); // make activesen selection inactive
-//    activesen = d3.select(null); // remove the activesen selection
-//}
-//
+
+    svg.transition()
+        .duration(1250) 
+        .call(zoom.translate(sen_translate).scale(sen_scale).event);
+
+
+    ///////////////////////////
+    // code for the sunburst //
+    ///////////////////////////
+
+    createSunburst(root);
+
+    
+    
+//    // if activating, select the clicked element and make it opaque
+//    d3.select(this)
+//        .style("opacity", 1);
+}
+
+// unclick function for senator circles
+function senator_reset() {
+    activesen.classed("active_sen", false); // make activesen selection inactive
+    activesen = d3.select(null); // remove the activesen selection
+    removeSunburst();
+}
+
 
 
 // Breadcrumb dimension settings
@@ -150,16 +173,14 @@ var b = {
 // Main function to draw and set up sunburst visualization, passing in json data.
 function createSunburst(json) {
 
-    // set SVG size params
-    var width = 960,
-        height = 700,
-        radius = Math.min(width, height) / 2;
+    // set SVG size params - we use 'width' and 'height' from primary SVG defined at top
+    var sunradius = Math.min(width, height) / 2;
 
     // set x and y scales
     var x = d3.scale.linear()
         .range([0, 2 * Math.PI]);
     var y = d3.scale.sqrt()
-        .range([0, radius]);
+        .range([0, sunradius]);
 
     // set colors
     var color = d3.scale.category20c();
@@ -168,12 +189,16 @@ function createSunburst(json) {
     initializeBreadcrumbTrail();
 
     // create the sunburst svg
-    var svgSunburst = d3.select("#map").append("svg")
-        .attr("width", width)
-        .attr("height", height)
+//    var svgSunburst = d3.select("#map").append("svg")
+//        .attr("width", width)
+//        .attr("height", height)
+//        .attr("svg_type", "sunburst") 
+//        .append("g") // add a g element to our SVG
+//        .attr("transform", "translate(" + width / 2 + "," + (height / 2 + 10) + ")"); // translate the "center" of our coordinate system to the middle of the svg
+    var svgSunburst = d3.select("#mapsvg")
         .attr("svg_type", "sunburst") 
         .append("g") // add a g element to our SVG
-        .attr("transform", "translate(" + width / 2 + "," + (height / 2 + 10) + ")"); // translate the "center" of our coordinate system to the middle of the svg
+        .attr("transform", "translate(" + width / 2 + "," + (height / 2) + ")"); // translate the "center" of our coordinate system to the middle of the svg
 
     // add a background transparent rectangle to the SVG for onclick
     var back_rect = svgSunburst.append("rect")
@@ -189,12 +214,13 @@ function createSunburst(json) {
 //    // Bounding circle underneath the sunburst, to make it easier to detect
 //    // when the mouse leaves the parent g.
 //    svgSunburst.append("svg:circle")
-//	.attr("r", radius)
+//	.attr("r", sunradius)
 //	.style("opacity", 0);
 
     // helper function for killing sunburst SVG
     function sunburstRemove() {
-	d3.select("[svg_type=sunburst]").remove();
+	d3.selectAll("#sunpath").remove()
+	d3.selectAll("#bgRect").remove();
     }	 
 
     // partition the data
@@ -239,6 +265,7 @@ function createSunburst(json) {
         .data(burst_nodes)
         .enter().append("path")
         .attr("d", arc)
+        .attr("id", "sunpath")
         .attr("node_depth", function(d) { return getNodeDepth(d)}) // assign node depth to path class
         .style("fill", function(d) { return color(getRootmostAncestorByRecursion(d).name); })
         .style("opacity", function(d) { return getNodeDepth(d) == 0 ? 0 : getNodeDepth(d) / Math.pow(getNodeDepth(d),2); }) // make opacity dependent on node depth
@@ -313,6 +340,7 @@ function createSunburst(json) {
 	var trail = d3.select("#introspect").append("svg:svg")
             .attr("width", width)
             .attr("height", 50)
+            .on("mouseover", mouseleave) // clear opacity and breadcrumbs
             .attr("id", "trail");
 	// Add the label at the end, for the percentage.
 	trail.append("svg:text")
@@ -437,7 +465,7 @@ function createSunburst(json) {
     function arcTweenZoom(d) {
 	var xd = d3.interpolate(x.domain(), [d.x, d.x + d.dx]),
             yd = d3.interpolate(y.domain(), [d.y, 1]),
-            yr = d3.interpolate(y.range(), [d.y ? 20 : 0, radius]);
+            yr = d3.interpolate(y.range(), [d.y ? 20 : 0, sunradius]);
 	return function(d, i) {
             return i
 		? function(t) { return arc(d); }
@@ -488,8 +516,9 @@ function getData() {
     };
 };
 
+// bring in json data from above
 root = getData();
 
-createSunburst(root);
+//createSunburst(root);
 
-
+// add function for the removal of the sunburst
