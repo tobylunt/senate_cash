@@ -159,7 +159,7 @@ function senator_clicked(d) {
 function senator_reset() {
     activesen.classed("active_sen", false); // make activesen selection inactive
     activesen = d3.select(null); // remove the activesen selection
-    removeSunburst();
+    sunburstRemove();
 }
 
 
@@ -206,8 +206,21 @@ function createSunburst(json) {
 
     // helper function for killing sunburst SVG
     function sunburstRemove() {
-	d3.selectAll("#sunpath").remove()
-	d3.selectAll("#bgRect").remove();
+	d3.selectAll("#sunpath").remove() // remove sunburst paths
+	d3.selectAll("#bgRect").remove(); // remove background rectangle
+
+	// zoom back to center of state
+	var sen_bounds = d3.select('.feature.active').node().getBBox(),
+	    dx = sen_bounds.width, // same as sen_bounds.height, bc circle
+	    dy = sen_bounds.height, // same as sen_bounds.height, bc circle
+	    x = sen_bounds.x + (dx / 2),
+    	    y = sen_bounds.y + (dy / 2),
+            scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / width, dy / height))),
+            translate = [width / 2 - scale * x, height / 2 - scale * y];
+
+	svg.transition()
+            .duration(600) 
+            .call(zoom.translate(translate).scale(scale).event);
     }	 
 
     // partition the data
@@ -248,14 +261,15 @@ function createSunburst(json) {
     }	 
 
     // create and select paths
-    var path = svgSunburst.datum(json).selectAll("path")
+    var sunpath = svgSunburst.datum(json).selectAll("path")
         .data(burst_nodes)
         .enter().append("path")
         .attr("d", arc)
         .attr("id", "sunpath")
         .attr("node_depth", function(d) { return getNodeDepth(d)}) // assign node depth to path class
         .style("fill", function(d) { return color(getRootmostAncestorByRecursion(d).name); })
-        .style("opacity", 0)
+//        .style("opacity", 0)
+        .style("opacity", function(d) { return getNodeDepth(d) == 0 ? 0 : getNodeDepth(d) / Math.pow(getNodeDepth(d),2); }) // make opacity dependent on node depth
         .on("click", click)
     	.on("mouseover", mouseover) // this creates the breadcrumbs
         .each(stash);
@@ -318,13 +332,13 @@ function createSunburst(json) {
     // Given a node in a partition layout, return an array of all of its ancestor
     // nodes, highest first, but excluding the root.
     function getAncestors(node) {
-	var path = [];
+	var sunpath = [];
 	var current = node;
 	while (current.parent) {
-            path.unshift(current);
+            sunpath.unshift(current);
             current = current.parent;
 	}
-	return path;
+	return sunpath;
     }
 
     function initializeBreadcrumbTrail() {
@@ -406,22 +420,22 @@ function createSunburst(json) {
             ? function() { return 1; } 
             : function(d) { return d.size; };
         
-        path
+        sunpath
             .data(partition.value(value).nodes)
     	.transition()
             .duration(1000) 
             .attrTween("d", arcTweenData);
     });
 
-    // calls click transition
+    // calls sunburst click transition - center node removes and recenters
     function click(d) {
         node = d;
-        path.transition()
-    	.duration(1000)
-    	.attrTween("d", arcTweenZoom(d));
+        sunpath.transition()
+    	    .duration(1000)
+    	    .attrTween("d", arcTweenZoom(d));
     }
 
-    // Add the mouseleave handler to the bounding circle.
+    // Add the mouseleave handler to the background rectangle
     d3.select("#bgRect").on("mouseover", mouseleave);
 
     d3.select(self.frameElement).style("height", height + "px");
