@@ -39,8 +39,7 @@ var jsonCircles = [
     { "x_axis": -85, "y_axis": 100, "radius": radius, "color" : "red"}];
 
 svg
-    .call(zoom) // delete this line to disable free zooming
-    .on("dblclick.zoom", null) // prevent double-click zooming
+//    .call(zoom) // delete this line to disable free zooming
     .call(zoom.event);
 
 // bring json map into django - N.B. hardcoded location
@@ -139,7 +138,7 @@ function senator_clicked(d) {
 //        translate = [width / 2 - scale * x, height / 2 - scale * y];
 
     svg.transition()
-        .duration(1250) 
+        .duration(600) 
         .call(zoom.translate(sen_translate).scale(sen_scale).event);
 
 
@@ -189,12 +188,6 @@ function createSunburst(json) {
     initializeBreadcrumbTrail();
 
     // create the sunburst svg
-//    var svgSunburst = d3.select("#map").append("svg")
-//        .attr("width", width)
-//        .attr("height", height)
-//        .attr("svg_type", "sunburst") 
-//        .append("g") // add a g element to our SVG
-//        .attr("transform", "translate(" + width / 2 + "," + (height / 2 + 10) + ")"); // translate the "center" of our coordinate system to the middle of the svg
     var svgSunburst = d3.select("#mapsvg")
         .attr("svg_type", "sunburst") 
         .append("g") // add a g element to our SVG
@@ -210,12 +203,6 @@ function createSunburst(json) {
     	.attr("id", "bgRect")
         .on("mouseover", mouseleave) // clear opacity and breadcrumbs
         .on("click", sunburstRemove); // clear the SVG entirely on background click
-
-//    // Bounding circle underneath the sunburst, to make it easier to detect
-//    // when the mouse leaves the parent g.
-//    svgSunburst.append("svg:circle")
-//	.attr("r", sunradius)
-//	.style("opacity", 0);
 
     // helper function for killing sunburst SVG
     function sunburstRemove() {
@@ -268,10 +255,16 @@ function createSunburst(json) {
         .attr("id", "sunpath")
         .attr("node_depth", function(d) { return getNodeDepth(d)}) // assign node depth to path class
         .style("fill", function(d) { return color(getRootmostAncestorByRecursion(d).name); })
-        .style("opacity", function(d) { return getNodeDepth(d) == 0 ? 0 : getNodeDepth(d) / Math.pow(getNodeDepth(d),2); }) // make opacity dependent on node depth
+        .style("opacity", 0)
         .on("click", click)
     	.on("mouseover", mouseover) // this creates the breadcrumbs
         .each(stash);
+
+//    var path = d3.selectAll("#sunpath")
+//	.transition()
+//        .duration(1500)
+//        .style("opacity", function(d) { return getNodeDepth(d) == 0 ? 0 : getNodeDepth(d) / Math.pow(getNodeDepth(d),2); }); // make opacity dependent on node depth
+    
     
     // Fade all but the current sequence, and show it in the breadcrumb trail.
     function mouseover(d) {
@@ -296,9 +289,9 @@ function createSunburst(json) {
 	        .style("opacity", 1);
 	}
 
-	if(d3.select(this).style("opacity") == 0) { // make center node deactivite breadcrumbs as well
-	    mouseleave();
-	}
+//	if(d3.select(this).style("opacity") == 0) { // make center node deactivite breadcrumbs as well
+//	    mouseleave();
+//	}
 
     }
     
@@ -315,7 +308,7 @@ function createSunburst(json) {
 	// Transition each segment to full opacity and then reactivate it.
 	d3.selectAll("path")
             .transition()
-            .duration(500)
+            .duration(250)
 	    .style("opacity", function(d) { return getNodeDepth(d) / Math.pow(getNodeDepth(d),2); })
             .each("end", function() {
                 d3.select(this).on("mouseover", mouseover);
@@ -393,7 +386,7 @@ function createSunburst(json) {
 	// Remove exiting nodes.
 	g.exit().remove();
 
-	// Now move and update the percentage at the end.
+	// Now move and update the sum total at the end.
 	d3.select("#trail").select("#endlabel")
             .attr("x", (nodeArray.length + 0.5) * (b.w + b.s))
             .attr("y", b.h / 2)
@@ -429,7 +422,7 @@ function createSunburst(json) {
     }
 
     // Add the mouseleave handler to the bounding circle.
-    d3.select("#bgRect").on("mouseleave", mouseleave);
+    d3.select("#bgRect").on("mouseover", mouseleave);
 
     d3.select(self.frameElement).style("height", height + "px");
 
