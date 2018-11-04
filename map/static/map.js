@@ -23,6 +23,23 @@ var svg = d3.select("#map").append("svg")
     .attr("id", "mapsvg")
     .on("click", stopped, true);
 
+// defs for image reuse
+var config = {
+    "avatar_size" : 48
+}
+
+var defs = svg.append('svg:defs');
+
+defs.append("svg:pattern")
+    .attr("id", "grump_avatar")
+//    .attr("patternUnits", "userSpaceOnUse")
+    .append("svg:image")
+    .attr("xlink:href", 'http://placekitten.com/g/48/48')
+    .attr("width", config.avatar_size)
+    .attr("height", config.avatar_size)
+    .attr("x", 0)
+    .attr("y", 0);
+
 // background rectangle within the svg, that resets on click
 svg.append("rect")
     .attr("class", "background")
@@ -89,8 +106,11 @@ function clicked(d) {
         .attr("cy", y)
         .attr("r", function (d) { return d.radius / scale; })
 	.attr("class", "senate_center")
-        .style("fill", function(d) { return d.color; })
-    	.on("click", senator_clicked) // click function for circles
+        .style("stroke", function(d) { return d.color; })
+	.style("stroke-width", 1)
+	.style("fill", "#fff")
+        .style("fill", "url(#grump_avatar)")
+  	.on("click", senator_clicked) // click function for circles
 }
 
 // unclick function for states
@@ -132,7 +152,7 @@ function senator_clicked(d) {
     	sen_y = sen_bounds.y,
 	center_x = sen_x + sen_rad,
 	center_y = sen_y + sen_rad,
-	sen_scale = Math.max(1, Math.min(30, 0.5 / Math.max(sen_diam / width, sen_diam / height))),
+	sen_scale = Math.max(1, Math.min(30, 0.48 / Math.max(sen_diam / width, sen_diam / height))),
 	sen_translate = [width / 2 - sen_scale * center_x, height / 2 - sen_scale *  center_y];
 //        scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / width, dy / height))),
 //        translate = [width / 2 - scale * x, height / 2 - scale * y];
