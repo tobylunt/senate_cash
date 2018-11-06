@@ -52,8 +52,8 @@ var g = svg.append("g");
 
 // CIRCLE PLAYGROUND
 var jsonCircles = [
-    { "x_axis": 85, "y_axis": 30, "radius": radius, "color" : "blue" },
-    { "x_axis": -85, "y_axis": 100, "radius": radius, "color" : "red"}];
+    { "x_axis": 100, "y_axis": 30, "radius": radius, "color" : "blue" },
+    { "x_axis": -100, "y_axis": 100, "radius": radius, "color" : "red"}];
 
 svg
 //    .call(zoom) // delete this line to disable free zooming
@@ -107,10 +107,18 @@ function clicked(d) {
         .attr("r", function (d) { return d.radius / scale; })
 	.attr("class", "senate_center")
         .style("stroke", function(d) { return d.color; })
-	.style("stroke-width", 1)
+//	.style("stroke-width", 1)
 	.style("fill", "#fff")
         .style("fill", "url(#grump_avatar)")
-  	.on("click", senator_clicked) // click function for circles
+        .style("opacity", 0)
+  	.on("click", senator_clicked); // click function for circles
+
+    g.selectAll("circle")
+	.transition()
+	.delay(function(d){ return 400; })
+        .duration(600)
+        .style("opacity", 1); // fade in the senator circles
+
 }
 
 // unclick function for states
@@ -142,8 +150,11 @@ function stopped() {
 function senator_clicked(d) {
     if (activesen.node() === this) return senator_reset(); // if this circle is already active and is clicked again, inactivate
     activesen.classed("active_sen", false); // make "activesen" selection inactive - i.e. if you click between two senators in the same state
+    inactive_sen = d3.selectAll(".senate_center").classed("inactive_sen", true);
     activesen = d3.select(this).classed("active_sen", true); // make this selection have "active_sen" class and store selection
+    activesen = d3.select(this).classed("inactive_sen", false); // make this selection have "active_sen" class and store selection
 
+    
     // set the scaling and transition on click
     var sen_bounds = d3.select('.active_sen').node().getBBox(),
 	sen_diam = sen_bounds.width, // same as sen_bounds.height, bc circle
@@ -152,10 +163,8 @@ function senator_clicked(d) {
     	sen_y = sen_bounds.y,
 	center_x = sen_x + sen_rad,
 	center_y = sen_y + sen_rad,
-	sen_scale = Math.max(1, Math.min(30, 0.48 / Math.max(sen_diam / width, sen_diam / height))),
+	sen_scale = Math.max(1, Math.min(30, 0.49 / Math.max(sen_diam / width, sen_diam / height))),
 	sen_translate = [width / 2 - sen_scale * center_x, height / 2 - sen_scale *  center_y];
-//        scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / width, dy / height))),
-//        translate = [width / 2 - scale * x, height / 2 - scale * y];
 
     svg.transition()
         .duration(600) 
@@ -163,16 +172,11 @@ function senator_clicked(d) {
 
 
     ///////////////////////////
-    // code for the sunburst //
+    // activate the sunburst //
     ///////////////////////////
 
     createSunburst(root);
 
-    
-    
-//    // if activating, select the clicked element and make it opaque
-//    d3.select(this)
-//        .style("opacity", 1);
 }
 
 // unclick function for senator circles
@@ -228,6 +232,8 @@ function createSunburst(json) {
     function sunburstRemove() {
 	d3.selectAll("#sunpath").remove() // remove sunburst paths
 	d3.selectAll("#bgRect").remove(); // remove background rectangle
+	d3.selectAll(".senate_center").classed("active_sen",false); // remove senate activity classes
+	d3.selectAll(".senate_center").classed("inactive_sen",false); // remove senate activity classes
 
 	// zoom back to center of state
 	var sen_bounds = d3.select('.feature.active').node().getBBox(),

@@ -25,12 +25,18 @@ author: tobias lunt
 }
 
 .senate_center {
-    opacity: .5; 
-
+    opacity: 1;
+    stroke-width: 10px;
+    vector-effect: non-scaling-stroke;
 }
 
 .senate_center.active_sen {
     opacity: 1;
+    fill: none;
+}
+
+.senate_center.inactive_sen {
+    opacity: .1;
     fill: none;
 }
 
