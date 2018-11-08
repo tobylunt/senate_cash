@@ -23,22 +23,48 @@ var svg = d3.select("#map").append("svg")
     .attr("id", "mapsvg")
     .on("click", stopped, true);
 
-// defs for image reuse
+// defs for image reuse - see https://stackoverflow.com/questions/25881186/d3-fill-shape-with-image-using-pattern
 var config = {
     "avatar_size" : 48
 }
-
-var defs = svg.append('svg:defs');
-
-defs.append("svg:pattern")
-    .attr("id", "grump_avatar")
+//var defs = svg.append('svg:defs');
+//defs.append("svg:pattern")
+//    .attr("id", "grump_avatar")
+//    .attr("width", config.avatar_size)
+//    .attr("height", config.avatar_size)
 //    .attr("patternUnits", "userSpaceOnUse")
-    .append("svg:image")
-    .attr("xlink:href", 'http://placekitten.com/g/48/48')
-    .attr("width", config.avatar_size)
-    .attr("height", config.avatar_size)
-    .attr("x", 0)
-    .attr("y", 0);
+//    .append("svg:image")
+//    .attr("xlink:href", 'http://placekitten.com/g/48/48')
+//    .attr("width", config.avatar_size)
+//    .attr("height", config.avatar_size)
+//    .attr("x", 0)
+//    .attr("y", 0);
+
+// g for holding header text
+var titleHeader = svg.append("g")
+    .attr("class","textHeader");
+//    .attr("transform", "translate(100,10)");
+
+titleHeader.append("rect")
+    .attr("class", "textHeader")
+    .attr("width", width)
+    .attr("height", 20)
+    .style("fill", "none");
+
+titleHeader.append("text")
+    .attr("class", "textHeader_title")
+    .attr("x", function(d){
+	return width / 2})
+    .attr("y", function(d){
+	return 40})
+    .text(function(d) {
+	return "Senate Finance in the United States";
+    })
+    .style("fill", "black")
+    .style("font-size", "50px")
+    .style("text-anchor", "middle")
+    .attr("dominant-baseline", "central")
+    .style("font-family", "'Slabo 27px', serif");
 
 // background rectangle within the svg, that resets on click
 svg.append("rect")
@@ -47,13 +73,20 @@ svg.append("rect")
     .attr("height", height)
     .on("click", reset);
 
+var circle = svg.append("circle")
+    .attr("cx", config.avatar_size/2)
+    .attr("cy", config.avatar_size/2)
+    .attr("r", config.avatar_size/2)
+    .style("fill", "#fff")
+    .style("fill", "url(#grump_avatar)");
+
 // append a "g" element (grouping) to the svg
 var g = svg.append("g");
 
 // CIRCLE PLAYGROUND
 var jsonCircles = [
-    { "x_axis": 100, "y_axis": 30, "radius": radius, "color" : "blue" },
-    { "x_axis": -100, "y_axis": 100, "radius": radius, "color" : "red"}];
+    { "x_axis": 100, "y_axis": 30, "radius": radius, "color" : "blue", "img" : "https://cdn0.iconfinder.com/data/icons/flat-round-system/512/android-128.png" },
+    { "x_axis": -100, "y_axis": 100, "radius": radius, "color" : "red", "img" : "https://cdn1.iconfinder.com/data/icons/user-pictures/100/male3-128.png"}];
 
 svg
 //    .call(zoom) // delete this line to disable free zooming
@@ -98,7 +131,7 @@ function clicked(d) {
         .call(zoom.translate(translate).scale(scale).event);
 
     // add circle pairs on click of states
-    g.selectAll("circle")
+    var circles = g.selectAll("circle")
 	.data(jsonCircles)
 	.enter()
         .append("circle")
@@ -107,17 +140,53 @@ function clicked(d) {
         .attr("r", function (d) { return d.radius / scale; })
 	.attr("class", "senate_center")
         .style("stroke", function(d) { return d.color; })
+    	.style("fill", "none")
 //	.style("stroke-width", 1)
-	.style("fill", "#fff")
-        .style("fill", "url(#grump_avatar)")
+//	.style("fill", "#fff")
+//        .style("fill", "url(#grump_avatar)")
         .style("opacity", 0)
   	.on("click", senator_clicked); // click function for circles
 
+    // fade in the senator circles
     g.selectAll("circle")
 	.transition()
 	.delay(function(d){ return 400; })
         .duration(600)
-        .style("opacity", 1); // fade in the senator circles
+        .style("opacity", 1); 
+
+    // fade out the text header on click
+    svg.selectAll(".textHeader_title")
+	.transition()
+	.delay(function(d){ return 400; })
+        .duration(600)
+        .style("opacity", 0); 
+
+//        // add circle pairs on click of states
+//    var circlegroups = g.selectAll("circle")
+//	.data(jsonCircles)
+//	.enter()
+//	.append("g") // add a group, which will combine circle and img
+//	.attr("class", "group")
+//        .style("opacity", 0)
+//  	.on("click", senator_clicked); // click function for circles
+//
+//    circlegroups.append("circle")
+//        .attr("cx", function (d) { return d.x_axis/scale + x; })
+//        .attr("cy", y)
+//        .attr("r", function (d) { return d.radius / scale; })
+//	.attr("class", "senate_center")
+//        .style("stroke", function(d) { return d.color; })
+//    	.style("fill", "none");
+//
+//    circlegroups.append("use")
+////	.attr("xlink:href", "#grump_avatar");
+//	.attr("xlink:href", 'http://placekitten.com/g/48/48');
+////	.attr("xlink:href", "#mySymbol");
+//    
+//    circlegroups.transition()
+//	.delay(function(d){ return 400; })
+//        .duration(600)
+//        .style("opacity", 1); // fade in the senator circles
 
 }
 
@@ -126,12 +195,20 @@ function reset() {
     active.classed("active", false); // makes "active" selection inactive
     active = d3.select(null); // remove "active" selection
 
+    // duration from "on" to "off"; translation back
     svg.transition()
-	.duration(1250) // duration from "on" to "off"
+	.duration(1250) 
 	.call(zoom.translate([0, 0]).scale(1).event);
 
     g.selectAll("circle")
 	.remove();
+
+    // make title card readable again
+    svg.selectAll(".textHeader_title")
+	.transition()
+	.delay(function(d){ return 400; })
+        .duration(600)
+        .style("opacity", 1); 
 }
 
 // zooming function
@@ -150,10 +227,11 @@ function stopped() {
 function senator_clicked(d) {
     if (activesen.node() === this) return senator_reset(); // if this circle is already active and is clicked again, inactivate
     activesen.classed("active_sen", false); // make "activesen" selection inactive - i.e. if you click between two senators in the same state
-    inactive_sen = d3.selectAll(".senate_center").classed("inactive_sen", true);
+    inactive_sen = d3.selectAll(".senate_center")
+	.classed("inactive_sen", true)
+	.style("opacity", null);
     activesen = d3.select(this).classed("active_sen", true); // make this selection have "active_sen" class and store selection
     activesen = d3.select(this).classed("inactive_sen", false); // make this selection have "active_sen" class and store selection
-
     
     // set the scaling and transition on click
     var sen_bounds = d3.select('.active_sen').node().getBBox(),
@@ -203,6 +281,7 @@ function createSunburst(json) {
     var x = d3.scale.linear()
         .range([0, 2 * Math.PI]);
     var y = d3.scale.sqrt()
+//    var y = d3.scale.linear()
         .range([0, sunradius]);
 
     // set colors
@@ -260,6 +339,7 @@ function createSunburst(json) {
         .endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx))); })
         .innerRadius(function(d) { return Math.max(0, y(d.y)); })
         .outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)); });
+//        .outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)) - 2; });
 
     // Keep track of the node that is currently being displayed as the root.
     var node;
@@ -293,6 +373,10 @@ function createSunburst(json) {
         .attr("d", arc)
         .attr("id", "sunpath")
         .attr("node_depth", function(d) { return getNodeDepth(d)}) // assign node depth to path class
+        .style("stroke", "white")
+        .style("stroke-width", .5)
+        .style("stroke-opacity", 1)
+        .style("stroke-alignment", "inner")
         .style("fill", function(d) { return color(getRootmostAncestorByRecursion(d).name); })
         .style("opacity", 0)
         .on("click", click)
@@ -462,7 +546,7 @@ function createSunburst(json) {
     function click(d) {
         node = d;
         sunpath.transition()
-    	    .duration(1000)
+    	    .duration(500)
     	    .attrTween("d", arcTweenZoom(d));
     }
 
