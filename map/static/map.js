@@ -23,23 +23,6 @@ var svg = d3.select("#map").append("svg")
     .attr("id", "mapsvg")
     .on("click", stopped, true);
 
-// defs for image reuse - see https://stackoverflow.com/questions/25881186/d3-fill-shape-with-image-using-pattern
-var config = {
-    "avatar_size" : 48
-}
-//var defs = svg.append('svg:defs');
-//defs.append("svg:pattern")
-//    .attr("id", "grump_avatar")
-//    .attr("width", config.avatar_size)
-//    .attr("height", config.avatar_size)
-//    .attr("patternUnits", "userSpaceOnUse")
-//    .append("svg:image")
-//    .attr("xlink:href", 'http://placekitten.com/g/48/48')
-//    .attr("width", config.avatar_size)
-//    .attr("height", config.avatar_size)
-//    .attr("x", 0)
-//    .attr("y", 0);
-
 // g for holding header text
 var titleHeader = svg.append("g")
     .attr("class","textHeader");
@@ -74,19 +57,20 @@ svg.append("rect")
     .on("click", reset);
 
 var circle = svg.append("circle")
-    .attr("cx", config.avatar_size/2)
-    .attr("cy", config.avatar_size/2)
-    .attr("r", config.avatar_size/2)
+    .attr("cx", radius/2)
+    .attr("cy", radius/2)
+    .attr("r", radius/2)
     .style("fill", "#fff")
-    .style("fill", "url(#grump_avatar)");
+    .style("fill", "url(#avatar)");
 
 // append a "g" element (grouping) to the svg
-var g = svg.append("g");
+var g = svg.append("g")
+    .attr("id", "mapG");
 
 // CIRCLE PLAYGROUND
 var jsonCircles = [
-    { "x_axis": 100, "y_axis": 30, "radius": radius, "color" : "blue", "img" : "https://cdn0.iconfinder.com/data/icons/flat-round-system/512/android-128.png" },
-    { "x_axis": -100, "y_axis": 100, "radius": radius, "color" : "red", "img" : "https://cdn1.iconfinder.com/data/icons/user-pictures/100/male3-128.png"}];
+    { "x_axis": 100, "y_axis": 30, "radius": radius, "color" : "blue", "img" : "https://cdn1.iconfinder.com/data/icons/user-pictures/100/male3-128.png" },
+    { "x_axis": -100, "y_axis": 100, "radius": radius, "color" : "red", "img" : "http://placekitten.com/g/48/48"}];
 
 svg
 //    .call(zoom) // delete this line to disable free zooming
@@ -111,8 +95,10 @@ d3.json("/static/us.json", function(error, us) {
 
 // clicked is the click engagement function for state features
 function clicked(d) {
+
+    // clean up any previously active states (i.e. clicking from one state to another)
     if (active.node() === this) return reset(); // resets when you click on an active state
-    g.selectAll("circle") // this makes the circles over a previously active state disappear when a new state is clicked
+    g.selectAll(".nodes_box") // this makes the circles over a previously active state disappear when a new state is clicked
         .remove()
     active.classed("active", false); // this makes any other clicked state inactive when a new state is clicked
     active = d3.select(this).classed("active", true); // add "active" class to this selection, and store in reference named "active"
@@ -126,29 +112,118 @@ function clicked(d) {
         scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / width, dy / height))),
         translate = [width / 2 - scale * x, height / 2 - scale * y];
 
+    // duraton and call translation
     svg.transition()
         .duration(1250) // duration from "off" to "on"
         .call(zoom.translate(translate).scale(scale).event);
 
-    // add circle pairs on click of states
-    var circles = g.selectAll("circle")
+// ATTEMPT # 3 - GROUPS - NOT WORKING    
+//    // create nodes for circle and image (senators)
+//  var nodeEnter = node.enter().append("svg:g")
+//      .attr("class", "node")
+//      .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
+//      .on("click", click)
+//      .call(force.drag);
+//
+//    defs.append("svg:pattern")
+//        .attr("id", "avatar")
+//        .attr("width", radius)
+//        .attr("height", radius)
+//        .attr("patternUnits", "userSpaceOnUse")
+//        .append("svg:image")
+//        .attr("xlink:href", 'http://placekitten.com/g/48/48')
+//        .attr("width", radius)
+//        .attr("height", radius)
+//        .attr("x", 0)
+//        .attr("y", 0);
+
+// ATTEMPT # 2 - NOT INITIATED    
+//    // defs for image reuse - see https://stackoverflow.com/questions/25881186/d3-fill-shape-with-image-using-pattern
+//    var defs = svg.append('svg:defs').attr("id", "imgdefs");
+
+//  ATTEMPT #1 - TILED    
+//    // see: https://groups.google.com/forum/#!topic/d3-js/1P5IphE319g
+//    var defs = svg.append('svg:defs');
+//    defs.append('svg:pattern')
+//        .attr('id', 'kitten')
+//        .attr('patternUnits', 'userSpaceOnUse')
+//        .attr('width', '6')
+//        .attr('height', '6')
+//        .append('svg:image')
+//        .attr('xlink:href', 'http://placekitten.com/g/48/48')
+//        .attr('x', 0)
+//        .attr('y', 0)
+//        .attr('width', 10)
+//        .attr('height', 10);
+//    
+//    // add circle pairs on click of states
+//    var circles = g.selectAll("circle")
+//	.data(jsonCircles)
+//	.enter()
+//        .append("circle")
+//        .attr("cx", function (d) { return d.x_axis/scale + x; })
+//        .attr("cy", y)
+//        .attr("r", function (d) { return d.radius / scale; })
+//	.attr("class", "senate_center")
+//        .style("stroke", function(d) { return d.color; })
+//        .style("fill", "url(#kitten)")
+//  	.on("click", senator_clicked); // click function for circles
+
+
+    var node = d3.select("#mapG").append("g")
+	.attr("class", "nodes_box")
+	.selectAll(".node")
 	.data(jsonCircles)
-	.enter()
-        .append("circle")
+	.enter().append("g")
+	.attr("class", "node")
+	.attr("cx", function(d) {
+            return d.x_axis/scale + x;
+	})
+	.attr("cy", function(d) {
+	    return d.y;
+	});
+
+    node.append("circle")
         .attr("cx", function (d) { return d.x_axis/scale + x; })
         .attr("cy", y)
         .attr("r", function (d) { return d.radius / scale; })
 	.attr("class", "senate_center")
         .style("stroke", function(d) { return d.color; })
     	.style("fill", "none")
-//	.style("stroke-width", 1)
-//	.style("fill", "#fff")
-//        .style("fill", "url(#grump_avatar)")
         .style("opacity", 0)
   	.on("click", senator_clicked); // click function for circles
 
+    node.append("clipPath")
+	.attr('id', function(d, i) {
+	    return "clip" + i
+	})
+	.append("circle")
+	.attr("class", "clip-path")
+        .attr("cx", function (d) { return d.x_axis/scale + x; })
+        .attr("cy", y)
+        .attr("r", function (d) { return d.radius / scale; });
+
+    node.append("svg:image")
+	.attr("class", "circle")
+	.attr("xlink:href", d => d.img)
+	.attr("clip-path", function(d, i) {
+	    return "url(#clip" + i + ")"
+	})
+	.attr("x", function(d) {
+            return d.x_axis/scale + x - 2 * (d.radius / scale / 2);
+	})
+	.attr("y", function(d) {
+	    return y - 2 * (d.radius / scale / 2);
+	})
+	.attr("width", function(d) {
+	    return d.radius / scale * 2;
+	})
+	.attr("height", function(d) {
+	    return d.radius / scale * 2;
+	});
+
     // fade in the senator circles
-    g.selectAll("circle")
+    g.selectAll(".senate_center")
 	.transition()
 	.delay(function(d){ return 400; })
         .duration(600)
@@ -161,33 +236,47 @@ function clicked(d) {
         .duration(600)
         .style("opacity", 0); 
 
-//        // add circle pairs on click of states
-//    var circlegroups = g.selectAll("circle")
+
+
+
+
+
+
+    
+
+//// WORKING CODE - DO NOT DELETE!    
+//    // add circle pairs on click of states
+//    var circles = g.selectAll("circle")
 //	.data(jsonCircles)
 //	.enter()
-//	.append("g") // add a group, which will combine circle and img
-//	.attr("class", "group")
-//        .style("opacity", 0)
-//  	.on("click", senator_clicked); // click function for circles
-//
-//    circlegroups.append("circle")
+//        .append("circle")
 //        .attr("cx", function (d) { return d.x_axis/scale + x; })
 //        .attr("cy", y)
 //        .attr("r", function (d) { return d.radius / scale; })
 //	.attr("class", "senate_center")
 //        .style("stroke", function(d) { return d.color; })
-//    	.style("fill", "none");
+//    	.style("fill", "none")
+//        .style("fill", "url(#avatar)")
+////	.style("stroke-width", 1)
+////	.style("fill", "#fff")
+////        .style("fill", "url(#grump_avatar)")
+//        .style("opacity", 0)
+//  	.on("click", senator_clicked); // click function for circles
 //
-//    circlegroups.append("use")
-////	.attr("xlink:href", "#grump_avatar");
-//	.attr("xlink:href", 'http://placekitten.com/g/48/48');
-////	.attr("xlink:href", "#mySymbol");
-//    
-//    circlegroups.transition()
+//    // fade in the senator circles
+//    g.selectAll("circle")
+//	.transition()
 //	.delay(function(d){ return 400; })
 //        .duration(600)
-//        .style("opacity", 1); // fade in the senator circles
-
+//        .style("opacity", 1); 
+//
+//    // fade out the text header on click
+//    svg.selectAll(".textHeader_title")
+//	.transition()
+//	.delay(function(d){ return 400; })
+//        .duration(600)
+//        .style("opacity", 0); 
+//
 }
 
 // unclick function for states
@@ -200,7 +289,8 @@ function reset() {
 	.duration(1250) 
 	.call(zoom.translate([0, 0]).scale(1).event);
 
-    g.selectAll("circle")
+//    g.selectAll("circle")
+    g.selectAll(".nodes_box")
 	.remove();
 
     // make title card readable again
