@@ -3,18 +3,24 @@ styles for senate cash mapping
 author: tobias lunt
 */
 
+html {
+    background-color: #232325;
+}
+
 .background {
     fill: none;
     pointer-events: all;
 }
 
 .feature {
-    fill: #ececec;
+    /* fill: #ececec; */
+    fill: #ebe7de;
     cursor: pointer;
 }
 
 .feature.active {
-    fill: #3e3ede;
+    /* fill: #3e3ede; */
+    fill: #6a8fd0;
 }
 
 .mesh {
@@ -48,8 +54,10 @@ author: tobias lunt
 
 /* sunburst introspection text */
 #introspect text {
-  font-weight: 500;
-  fill: #000000;
+  font-weight: 800;
   font-family: "Courier New", Times, serif;
+  fill: #e5e1d8;
+  text-shadow: #000 0px 0px 1px,   #000 0px 0px 1px,   #000 0px 0px 1px,
+               #000 0px 0px 1px,   #000 0px 0px 1px,   #000 0px 0px 1px;
 }
 

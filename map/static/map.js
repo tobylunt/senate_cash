@@ -1,4 +1,4 @@
-var width = 960,
+var width = 1200,
     height = 750,
     radius = 80,
     active = d3.select(null);
@@ -23,10 +23,12 @@ var svg = d3.select("#map").append("svg")
     .attr("id", "mapsvg")
     .on("click", stopped, true);
 
+// set stroke width for senator avatar circles
+var circle_stroke = 1.5
+
 // g for holding header text
 var titleHeader = svg.append("g")
     .attr("class","textHeader");
-//    .attr("transform", "translate(100,10)");
 
 titleHeader.append("rect")
     .attr("class", "textHeader")
@@ -43,7 +45,7 @@ titleHeader.append("text")
     .text(function(d) {
 	return "Senate Finance in the United States";
     })
-    .style("fill", "black")
+    .style("fill", "#e5e1d8")
     .style("font-size", "50px")
     .style("text-anchor", "middle")
     .attr("dominant-baseline", "central")
@@ -148,7 +150,7 @@ function clicked(d) {
 	.attr("class", "clip-path")
         .attr("cx", function (d) { return d.x_axis/scale + x; })
         .attr("cy", y)
-        .attr("r", function (d) { return d.radius / scale; });
+        .attr("r", function (d) { return d.radius / scale - ((circle_stroke) / scale); });
 
     node.append("svg:image")
 	.attr("class", "circle")
@@ -208,7 +210,7 @@ function reset() {
 
 // zooming function
 function zoomed() {
-    g.style("stroke-width", 1.5 / d3.event.scale + "px"); // keeps stroke width constant
+    g.style("stroke-width", circle_stroke / d3.event.scale + "px"); // keeps stroke width constant
     g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")"); // zooms
 }
 
@@ -361,9 +363,9 @@ function createSunburst(json) {
         .attr("d", arc)
         .attr("id", "sunpath")
         .attr("node_depth", function(d) { return getNodeDepth(d)}) // assign node depth to path class
-        .style("stroke", "white")
-        .style("stroke-width", .5)
-        .style("stroke-opacity", 1)
+        .style("stroke", "#232325")
+        .style("stroke-width", .2)
+//        .style("stroke-opacity", 0)
         .style("stroke-alignment", "inner")
         .style("fill", function(d) { return color(getRootmostAncestorByRecursion(d).name); })
         .style("opacity", 0)
@@ -441,10 +443,10 @@ function createSunburst(json) {
             .attr("height", 50)
             .on("mouseover", mouseleave) // clear opacity and breadcrumbs
             .attr("id", "trail");
+
 	// Add the label at the end, for the percentage.
 	trail.append("svg:text")
             .attr("id", "endlabel")
-            .style("fill", "#000");
     }
 
     // Generate a string that describes the points of a breadcrumb polygon.
