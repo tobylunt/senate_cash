@@ -117,61 +117,9 @@ function clicked(d) {
         .duration(1250) // duration from "off" to "on"
         .call(zoom.translate(translate).scale(scale).event);
 
-// ATTEMPT # 3 - GROUPS - NOT WORKING    
-//    // create nodes for circle and image (senators)
-//  var nodeEnter = node.enter().append("svg:g")
-//      .attr("class", "node")
-//      .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
-//      .on("click", click)
-//      .call(force.drag);
-//
-//    defs.append("svg:pattern")
-//        .attr("id", "avatar")
-//        .attr("width", radius)
-//        .attr("height", radius)
-//        .attr("patternUnits", "userSpaceOnUse")
-//        .append("svg:image")
-//        .attr("xlink:href", 'http://placekitten.com/g/48/48')
-//        .attr("width", radius)
-//        .attr("height", radius)
-//        .attr("x", 0)
-//        .attr("y", 0);
-
-// ATTEMPT # 2 - NOT INITIATED    
-//    // defs for image reuse - see https://stackoverflow.com/questions/25881186/d3-fill-shape-with-image-using-pattern
-//    var defs = svg.append('svg:defs').attr("id", "imgdefs");
-
-//  ATTEMPT #1 - TILED    
-//    // see: https://groups.google.com/forum/#!topic/d3-js/1P5IphE319g
-//    var defs = svg.append('svg:defs');
-//    defs.append('svg:pattern')
-//        .attr('id', 'kitten')
-//        .attr('patternUnits', 'userSpaceOnUse')
-//        .attr('width', '6')
-//        .attr('height', '6')
-//        .append('svg:image')
-//        .attr('xlink:href', 'http://placekitten.com/g/48/48')
-//        .attr('x', 0)
-//        .attr('y', 0)
-//        .attr('width', 10)
-//        .attr('height', 10);
-//    
-//    // add circle pairs on click of states
-//    var circles = g.selectAll("circle")
-//	.data(jsonCircles)
-//	.enter()
-//        .append("circle")
-//        .attr("cx", function (d) { return d.x_axis/scale + x; })
-//        .attr("cy", y)
-//        .attr("r", function (d) { return d.radius / scale; })
-//	.attr("class", "senate_center")
-//        .style("stroke", function(d) { return d.color; })
-//        .style("fill", "url(#kitten)")
-//  	.on("click", senator_clicked); // click function for circles
-
-
     var node = d3.select("#mapG").append("g")
 	.attr("class", "nodes_box")
+        .style("opacity", 0)
 	.selectAll(".node")
 	.data(jsonCircles)
 	.enter().append("g")
@@ -190,7 +138,6 @@ function clicked(d) {
 	.attr("class", "senate_center")
         .style("stroke", function(d) { return d.color; })
     	.style("fill", "none")
-        .style("opacity", 0)
   	.on("click", senator_clicked); // click function for circles
 
     node.append("clipPath")
@@ -223,7 +170,7 @@ function clicked(d) {
 	});
 
     // fade in the senator circles
-    g.selectAll(".senate_center")
+    g.selectAll(".nodes_box")
 	.transition()
 	.delay(function(d){ return 400; })
         .duration(600)
@@ -235,48 +182,6 @@ function clicked(d) {
 	.delay(function(d){ return 400; })
         .duration(600)
         .style("opacity", 0); 
-
-
-
-
-
-
-
-    
-
-//// WORKING CODE - DO NOT DELETE!    
-//    // add circle pairs on click of states
-//    var circles = g.selectAll("circle")
-//	.data(jsonCircles)
-//	.enter()
-//        .append("circle")
-//        .attr("cx", function (d) { return d.x_axis/scale + x; })
-//        .attr("cy", y)
-//        .attr("r", function (d) { return d.radius / scale; })
-//	.attr("class", "senate_center")
-//        .style("stroke", function(d) { return d.color; })
-//    	.style("fill", "none")
-//        .style("fill", "url(#avatar)")
-////	.style("stroke-width", 1)
-////	.style("fill", "#fff")
-////        .style("fill", "url(#grump_avatar)")
-//        .style("opacity", 0)
-//  	.on("click", senator_clicked); // click function for circles
-//
-//    // fade in the senator circles
-//    g.selectAll("circle")
-//	.transition()
-//	.delay(function(d){ return 400; })
-//        .duration(600)
-//        .style("opacity", 1); 
-//
-//    // fade out the text header on click
-//    svg.selectAll(".textHeader_title")
-//	.transition()
-//	.delay(function(d){ return 400; })
-//        .duration(600)
-//        .style("opacity", 0); 
-//
 }
 
 // unclick function for states
@@ -429,7 +334,7 @@ function createSunburst(json) {
         .endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx))); })
         .innerRadius(function(d) { return Math.max(0, y(d.y)); })
         .outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)); });
-//        .outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)) - 2; });
+//        .outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)) - 2; }); // separate the layer bands
 
     // Keep track of the node that is currently being displayed as the root.
     var node;
@@ -446,7 +351,6 @@ function createSunburst(json) {
     ;
 
     // find most basic connected node - for color consistency
-    // from https://stackoverflow.com/questions/33371154/how-to-get-corresponding-colors-from-d3-sunburst-parent-to-final-child
     function getRootmostAncestorByRecursion(node) {
         return node.depth > 1 ? getRootmostAncestorByRecursion(node.parent) : node;
     }	 
@@ -479,12 +383,6 @@ function createSunburst(json) {
         .duration(600)
         .style("opacity", function(d) { return getNodeDepth(d) == 0 ? 0 : getNodeDepth(d) / Math.pow(getNodeDepth(d),2); }); // make opacity dependent on node depth
 
-//    var path = d3.selectAll("#sunpath")
-//	.transition()
-//        .duration(1500)
-//        .style("opacity", function(d) { return getNodeDepth(d) == 0 ? 0 : getNodeDepth(d) / Math.pow(getNodeDepth(d),2); }); // make opacity dependent on node depth
-    
-    
     // Fade all but the current sequence, and show it in the breadcrumb trail.
     function mouseover(d) {
 
