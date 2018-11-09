@@ -119,7 +119,6 @@ function clicked(d) {
 
     var node = d3.select("#mapG").append("g")
 	.attr("class", "nodes_box")
-        .style("opacity", 0)
 	.selectAll(".node")
 	.data(jsonCircles)
 	.enter().append("g")
@@ -129,7 +128,9 @@ function clicked(d) {
 	})
 	.attr("cy", function(d) {
 	    return d.y;
-	});
+	})
+        .style("opacity", 0)
+      	.on("click", senator_clicked); // click function for senator sunburst
 
     node.append("circle")
         .attr("cx", function (d) { return d.x_axis/scale + x; })
@@ -138,7 +139,6 @@ function clicked(d) {
 	.attr("class", "senate_center")
         .style("stroke", function(d) { return d.color; })
     	.style("fill", "none")
-  	.on("click", senator_clicked); // click function for circles
 
     node.append("clipPath")
 	.attr('id', function(d, i) {
@@ -170,7 +170,7 @@ function clicked(d) {
 	});
 
     // fade in the senator circles
-    g.selectAll(".nodes_box")
+    g.selectAll(".node")
 	.transition()
 	.delay(function(d){ return 400; })
         .duration(600)
@@ -220,13 +220,14 @@ function stopped() {
 
 // click function for senators (circles)
 function senator_clicked(d) {
-    if (activesen.node() === this) return senator_reset(); // if this circle is already active and is clicked again, inactivate
     activesen.classed("active_sen", false); // make "activesen" selection inactive - i.e. if you click between two senators in the same state
-    inactive_sen = d3.selectAll(".senate_center")
+    inactive_sen = d3.selectAll(".node")
 	.classed("inactive_sen", true)
-	.style("opacity", null);
-    activesen = d3.select(this).classed("active_sen", true); // make this selection have "active_sen" class and store selection
-    activesen = d3.select(this).classed("inactive_sen", false); // make this selection have "active_sen" class and store selection
+	.style("opacity", .1)
+    activesen = d3.select(this)
+	.classed("active_sen", true) // make this selection have "active_sen" class and store selection
+	.classed("inactive_sen", false) // make this selection have "active_sen" class and store selection
+    	.style("opacity", 1);
     
     // set the scaling and transition on click
     var sen_bounds = d3.select('.active_sen').node().getBBox(),
@@ -251,15 +252,6 @@ function senator_clicked(d) {
     createSunburst(root);
 
 }
-
-// unclick function for senator circles
-function senator_reset() {
-    activesen.classed("active_sen", false); // make activesen selection inactive
-    activesen = d3.select(null); // remove the activesen selection
-    sunburstRemove();
-}
-
-
 
 // Breadcrumb dimension settings
 var b = {
@@ -306,8 +298,10 @@ function createSunburst(json) {
     function sunburstRemove() {
 	d3.selectAll("#sunpath").remove() // remove sunburst paths
 	d3.selectAll("#bgRect").remove(); // remove background rectangle
-	d3.selectAll(".senate_center").classed("active_sen",false); // remove senate activity classes
-	d3.selectAll(".senate_center").classed("inactive_sen",false); // remove senate activity classes
+	d3.selectAll(".node").classed("active_sen",false); // remove senate activity classes
+	d3.selectAll(".node").classed("inactive_sen",false); // remove senate activity classes
+	activesen = d3.select(null); // remove the activesen selection
+	d3.selectAll(".node").style("opacity", 1); // reset avatars to full opacity
 
 	// zoom back to center of state
 	var sen_bounds = d3.select('.feature.active').node().getBBox(),
@@ -405,11 +399,6 @@ function createSunburst(json) {
 	        })
 	        .style("opacity", 1);
 	}
-
-//	if(d3.select(this).style("opacity") == 0) { // make center node deactivite breadcrumbs as well
-//	    mouseleave();
-//	}
-
     }
     
     // Restore everything to full opacity when moving off the visualization.

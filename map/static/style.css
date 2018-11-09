@@ -30,12 +30,12 @@ author: tobias lunt
     vector-effect: non-scaling-stroke;
 }
 
-.senate_center.active_sen {
+.node .active_sen {
     opacity: 1;
     fill: none;
 }
 
-.senate_center.inactive_sen {
+.node .inactive_sen {
     opacity: .1;
     fill: none;
 }
