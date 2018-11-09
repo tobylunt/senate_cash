@@ -119,6 +119,7 @@ function clicked(d) {
         .duration(1250) // duration from "off" to "on"
         .call(zoom.translate(translate).scale(scale).event);
 
+    // add grouped objects for all of the nodes (two per state, one per senator)
     var node = d3.select("#mapG").append("g")
 	.attr("class", "nodes_box")
 	.selectAll(".node")
@@ -134,6 +135,7 @@ function clicked(d) {
         .style("opacity", 0)
       	.on("click", senator_clicked); // click function for senator sunburst
 
+    // add the circle with outside stroke
     node.append("circle")
         .attr("cx", function (d) { return d.x_axis/scale + x; })
         .attr("cy", y)
@@ -142,6 +144,7 @@ function clicked(d) {
         .style("stroke", function(d) { return d.color; })
     	.style("fill", "none")
 
+    // add the clipping circle- slightly smaller than the above to keep the full stroke width
     node.append("clipPath")
 	.attr('id', function(d, i) {
 	    return "clip" + i
@@ -150,8 +153,9 @@ function clicked(d) {
 	.attr("class", "clip-path")
         .attr("cx", function (d) { return d.x_axis/scale + x; })
         .attr("cy", y)
-        .attr("r", function (d) { return d.radius / scale - ((circle_stroke) / scale); });
+        .attr("r", function (d) { return (d.radius - 2*circle_stroke) / scale; });
 
+    //
     node.append("svg:image")
 	.attr("class", "circle")
 	.attr("xlink:href", d => d.img)
