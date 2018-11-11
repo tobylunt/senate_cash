@@ -58,24 +58,17 @@ svg.append("rect")
     .attr("height", height)
     .on("click", reset);
 
-var circle = svg.append("circle")
-    .attr("cx", radius/2)
-    .attr("cy", radius/2)
-    .attr("r", radius/2)
-    .style("fill", "#fff")
-    .style("fill", "url(#avatar)");
-
 // append a "g" element (grouping) to the svg
 var g = svg.append("g")
     .attr("id", "mapG");
 
-// CIRCLE PLAYGROUND
+// circle data (TMP)
 var jsonCircles = [
     { "x_axis": 100, "y_axis": 30, "radius": radius, "color" : "blue", "img" : "https://cdn.civil.services/senate/headshots/512x512/tammy-baldwin.jpg" },
     { "x_axis": -100, "y_axis": 100, "radius": radius, "color" : "red", "img" : "https://cdn.civil.services/senate/headshots/512x512/ron-johnson.jpg"}];
 
 svg
-//    .call(zoom) // delete this line to disable free zooming
+//    .call(zoom) // uncomment this line to enable free zooming
     .call(zoom.event);
 
 // bring json map into django - N.B. hardcoded location
@@ -250,13 +243,8 @@ function senator_clicked(d) {
         .duration(600) 
         .call(zoom.translate(sen_translate).scale(sen_scale).event);
 
-
-    ///////////////////////////
-    // activate the sunburst //
-    ///////////////////////////
-
+    // activate the sunburst
     createSunburst(root);
-
 }
 
 // Breadcrumb dimension settings
@@ -277,9 +265,11 @@ function createSunburst(json) {
 //    var y = d3.scale.linear() // linear scale to y makes the paths all equal thickness
         .range([0, sunradius]);
 
-    // set colors
-    var color = d3.scale.category20c();
-
+    // set color category
+//    var color = d3.scale.category20c(); // old color scale
+    var brewer = d3.entries(colorbrewer);
+    var palette = brewer[34]; // select the colorbrewer scale we wish - see http://bl.ocks.org/emmasaunders/52fa83767df27f1fc8b3ee2c6d372c74
+    
     // Basic setup of page elements.
     initializeBreadcrumbTrail();
 
@@ -289,8 +279,11 @@ function createSunburst(json) {
         .append("g") // add a g element to our SVG
         .attr("transform", "translate(" + width / 2 + "," + (height / 2) + ")"); // translate the "center" of our coordinate system to the middle of the svg
 
+    // retrieve the specs of the active group containing our senator avatar
+    var active_avatar = d3.select(".active_sen .senate_center")
+
     // add a background transparent rectangle to the SVG for onclick
-    var back_rect = svgSunburst.append("rect")
+    svgSunburst.append("rect")
 	.attr("x", -width/2)
 	.attr("y", -height/2)
         .attr("width", width)
@@ -298,6 +291,17 @@ function createSunburst(json) {
         .attr("opacity", 0)
     	.attr("id", "bgRect")
         .on("mouseover", mouseleave) // clear opacity and breadcrumbs
+        .on("click", sunburstRemove); // clear the SVG entirely on background click
+
+    // add a background transparent circle to the SVG for onclick but WITHOUT mouseleave
+    svgSunburst.append("circle")
+	.attr("cy", active_avatar.cy)
+	.attr("cx", active_avatar.cx)
+    //    	.attr("r", active_avatar.r + Math.sqrt(active_avatar.r) + Math.sqrt(Math.sqrt(active_avatar.r)))
+//        .attr("r", active_avatar.r)
+    	.attr("r", 20) 
+        .attr("opacity", 0)
+    	.attr("id", "bgCirc")
         .on("click", sunburstRemove); // clear the SVG entirely on background click
 
     // helper function for killing sunburst SVG
@@ -363,12 +367,14 @@ function createSunburst(json) {
         .data(burst_nodes)
         .enter().append("path")
         .attr("d", arc)
+	.each(function(d, i) { d.index = i; })
         .attr("id", "sunpath")
         .attr("node_depth", function(d) { return getNodeDepth(d)}) // assign node depth to path class
         .style("stroke", "#232325")
         .style("stroke-width", .2)
         .style("stroke-alignment", "inner")
-        .style("fill", function(d) { return color(getRootmostAncestorByRecursion(d).name); })
+//        .style("fill", function(d) { return color(getRootmostAncestorByRecursion(d).name); }) // old colors - using d3 scale
+        .style("fill", function(d,i) { return palette.value[12][getRootmostAncestorByRecursion(d).index] }) // selects colorbrewer colors in order for primary nodes, then gives those colors to all child nodes
         .style("opacity", 0)
         .on("click", click)
     	.on("mouseover", mouseover) // this creates the breadcrumbs
@@ -480,7 +486,8 @@ function createSunburst(json) {
 	// color and opacity of the breadcrumbs matches the sunburst
 	entering.append("svg:polygon")
             .attr("points", breadcrumbPoints)
-            .style("fill", function(d) { return color(getRootmostAncestorByRecursion(d).name); })
+//            .style("fill", function(d) { return color(getRootmostAncestorByRecursion(d).name); })
+	    .style("fill", function(d) { return palette.value[12][getRootmostAncestorByRecursion(d).index] })
             .style("opacity", function(d) { return getNodeDepth(d) == 0 ? 0 : getNodeDepth(d) / Math.pow(getNodeDepth(d),2); }) // make opacity dependent on node depth
 
 	// position the text centered within each box
@@ -532,9 +539,6 @@ function createSunburst(json) {
     	    .duration(500)
     	    .attrTween("d", arcTweenZoom(d));
     }
-
-    // Add the mouseleave handler to the background rectangle
-    d3.select("#bgRect").on("mouseover", mouseleave);
 
     d3.select(self.frameElement).style("height", height + "px");
 
@@ -638,6 +642,3 @@ function getData() {
 // bring in json data from above
 root = getData();
 
-//createSunburst(root);
-
-// add function for the removal of the sunburst
