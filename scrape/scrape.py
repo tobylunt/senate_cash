@@ -14,16 +14,19 @@ import requests
 from requests.auth import HTTPDigestAuth
 
 # open untracked apikey file, save the stored key from the top line
-with open('os_apikey.txt') as fp:
+with open('../os_apikey.txt') as fp:
     lines = fp.read().split("\n")
-
-# set up a currently empty handler for API call errors
-class CRPApiError(Exception):
-    """ Exception for CRP API errors """
 
 # this code is modified from the Center for Responsive Politics python API, which is extremely helpful but not maintained.
 # https://github.com/opensecrets/python-crpapi
 # note that we also use some of the updates in unmerged pull requests in this repo, updated for python 3. thanks!
+
+# set up a currently empty handler for API call errors
+class CRPApiError(Exception):
+    """ Exception for CRP API errors """
+    
+
+# CRP will handle our various API calls
 class CRP(object):
 
     # initialize API key as empty
@@ -121,8 +124,19 @@ CRP.apikey = lines[0]
 
 # begin with getting basic information about senators from CivilServiceUSA's repo
 url = "https://raw.githubusercontent.com/CivilServiceUSA/us-senate/master/us-senate/data/us-senate.json"
-r = requests.get(url).text
+r = requests.get(url)
 
 # take a look at what we've got - full json
-parsed = json.loads(r)
+parsed = json.loads(r.text)
 print(json.dumps(parsed, indent=4, sort_keys=True))
+
+# explore the json. check to make sure we have two senators in each of
+# our 50 states
+len(parsed)
+
+tmp = parsed[1]
+dict((k, tmp[k]) for k in ('state_code', 'name', 'opensecrets', 'photo_url'))
+keys = ['state_code', 'name', 'opensecrets', 'photo_url']
+dict_short = { key: tmp[key] for key in keys }
+
+[for i in range(len(parsed)) dict((k, tmp[i][k]) for k in ('state_code', 'name', 'opensecrets', 'photo_url'))]
