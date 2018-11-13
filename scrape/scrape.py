@@ -13,7 +13,8 @@ import json
 import requests
 from requests.auth import HTTPDigestAuth
 
-# open untracked apikey file, save the stored key from the top line
+# open untracked apikey file, save the stored key from the top
+# line. save your API key into this file and adjust the path as needed.
 with open('../os_apikey.txt') as fp:
     lines = fp.read().split("\n")
 
