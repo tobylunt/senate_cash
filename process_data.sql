@@ -1,32 +1,37 @@
-# start the postgres server
-pg_ctl -D /usr/local/var/postgres start
-
-# open up psql
-# psql postgres -U tobiaslunt
+-- open up psql
 psql postgres
 
-# list users
+-- turn on query timing
+\timing
+
+-- list users
 \du
 
-# list databases
-\list
+-- create a user with write permissions for this db
+createuser senate_cash --createdb
 
-# connect to test_db
+-- list databases
+\l
+
+-- create the db
+contribs
+
+-- connect to test_db
 \connect test_db
 
-# list tables
+-- list tables
 \dt
 
-# create a new table
-#CREATE TABLE agency (
-#    agency_id character varying,
-#    agency_name character varying NOT NULL,
-#    agency_url character varying NOT NULL,
-#    agency_timezone character varying NOT NULL,
-#    agency_lang character varying,
-#    agency_phone character varying,
-#    agency_fare_url character varying
-#);
+-- create a new table
+--CREATE TABLE agency (
+--    agency_id character varying,
+--    agency_name character varying NOT NULL,
+--    agency_url character varying NOT NULL,
+--    agency_timezone character varying NOT NULL,
+--    agency_lang character varying,
+--    agency_phone character varying,
+--    agency_fare_url character varying
+--);
 
 CREATE TABLE "Pac_Other16" (
     Cycle char(4) NOT NULL,
@@ -63,19 +68,19 @@ CREATE TABLE "Pac_Other16" (
 
 
 
-# query table info
+-- query table info
 SELECT *
 FROM information_schema.columns
 WHERE table_schema = 'public'
   AND table_name   = 'test_table';
 
-# another query
+-- another query
 select *
 from test_table
 where false;
 
 
-# copy from file on desktop
+-- copy from file on desktop
 COPY test_table FROM '/Users/tobiaslunt/Desktop/pac_other16.txt' WITH CSV QUOTE '|' DELIMITER ',';
 
 
