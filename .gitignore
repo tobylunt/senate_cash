@@ -9,3 +9,6 @@ myvenv
 db.sqlite3
 /static
 .DS_Store
+
+# raw data
+raw
