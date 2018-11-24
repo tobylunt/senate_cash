@@ -137,21 +137,18 @@ CREATE TABLE pac_to_pacs(
 );
 \COPY pac_to_pacs(cycle, fec_rec_no, filer_id, donor_committee, contrib_lend_trans, city, state, zip, fec_occ_emp, prim_code, date, amount, recipient_id, party, other_id, recip_code, recip_prim_code, amend, report, pg, microfilm, type, real_code, source ) from 'pac_other16.txt' WITH CSV QUOTE '|' DELIMITER ',';
 
----- industry codes - DONT HAVE THIS FILE YET.
---DROP TABLE industry_codes;
---CREATE TABLE industry_codes(
---  id bigserial primary key,
---  category_code varchar(255),
---  category_name varchar(255),
---  industry_code varchar(255),
---  industry_name varchar(255),
---  sector varchar(255),
---  sector_long varchar(255)
---);
----- Line 443 extra column at end of line needs to be deleted
---COPY industry_codes(category_code, category_name, industry_code, industry_name, sector, sector_long)
---from '/Users/sik/Downloads/CRP_Categories.txt'
---WITH CSV DELIMITER E'\t';
+-- industry codes
+DROP TABLE industry_codes;
+CREATE TABLE industry_codes(
+  id bigserial primary key,
+  category_code varchar(255),
+  category_name varchar(255),
+  industry_code varchar(255),
+  industry_name varchar(255),
+  sector varchar(255),
+  sector_long varchar(255)
+);
+\COPY industry_codes(category_code, category_name, industry_code, industry_name, sector, sector_long) from 'CRP_Categories.txt' WITH CSV DELIMITER E'\t';
 
 -- politicians identifiers - from candidate table
 DROP TABLE politicians;
@@ -198,13 +195,22 @@ CREATE INDEX ON individual_contributions (recipient_id);
 CREATE INDEX ON individual_contributions (real_code);
 CREATE INDEX ON pacs (cid);
 CREATE INDEX ON pacs (real_code);
---CREATE INDEX ON industry_codes (category_code);
+CREATE INDEX ON industry_codes (category_code);
 CREATE INDEX ON politicians (cid);
 CREATE INDEX ON politicians (name);
 CREATE INDEX ON individual_contributions (cycle);
 CREATE INDEX ON pacs (cycle);
 CREATE INDEX ON candidates (cycle);
 CREATE INDEX ON pac_records (committee_id);
+
+
+
+
+
+
+
+
+
 
 
 

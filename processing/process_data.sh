@@ -9,22 +9,30 @@ set -e
 set -u
 
 # check for necessary input variables
-if [ $# != 2 ]; then
-    echo "please enter 2-digit contribution cycle, db host and a table suffix"
+if [ $# != 1 ]; then
+    echo "please enter 2-digit contribution cycle (e.g. 16)"
     exit 1
 fi
 
 # get input vars into globals for readability (and for psql)
 export CYCLE=$1
-export TSUFF=$2
 
 # remove any previous iterations of the raw data, recreate the dir, and cd
 rm -rf raw
 mkdir raw
 cd raw
 
+# get the industry categories from CRP
+wget https://www.opensecrets.org/downloads/crp/CRP_Categories.txt
+
+# remove the preamble from the industry codes .txt
+split -p "Catcode"  CRP_Categories.txt
+rm xaa
+rm CRP_Categories.txt
+mv xab CRP_Categories.txt
+
 # wget the zip, using the input election cycle, following CRP naming conventions
-wget --header="Host: s3.amazonaws.com" --header="User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36" --header="Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8" --header="Accept-Language: en-US,en;q=0.9" "https://s3.amazonaws.com/assets3.opensecrets.org/bulk-data/CampaignFin$CYCLE.zip" -O "CampaignFin18.zip" -c
+wget --header="Host: s3.amazonaws.com" --header="User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36" --header="Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8" --header="Accept-Language: en-US,en;q=0.9" "https://s3.amazonaws.com/assets3.opensecrets.org/bulk-data/CampaignFin$CYCLE.zip" -O "CampaignFin$CYCLE.zip" -c
 
 # unzip the download
 unzip CampaignFin$CYCLE.zip
@@ -55,8 +63,6 @@ psql \
     --echo-all \ # make visible to stdout
     --set AUTOCOMMIT=off \ # no automatic commits!
     --set ON_ERROR_STOP=on \ # break if anything goes wrong
-    --set TSUFF=$TSUFF \
-    --set QTSTUFF=\'$TSUFF\' \ # quoted version of second argument (table suffix)
     contribs # db name
 
 psql_exit_status = $?
