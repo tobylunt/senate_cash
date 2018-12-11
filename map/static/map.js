@@ -1,22 +1,27 @@
+// set primary dimensions
 var width = 1200,
     height = 750,
     radius = 80,
     active = d3.select(null);
     activesen = d3.select(null);
 
+// define projection
 var projection = d3.geo.albersUsa()
     .scale(1000)
     .translate([width / 2, height / 2]);
 
+// define primary zoom behavior
 var zoom = d3.behavior.zoom()
     .translate([0, 0])
     .scale(1)
     .scaleExtent([1, 30])
     .on("zoom", zoomed);
 
+// get map paths into a var
 var path = d3.geo.path()
     .projection(projection);
 
+// add the primary SVG box
 var svg = d3.select("#map").append("svg")
     .attr("width", width)
     .attr("height", height)
@@ -30,12 +35,14 @@ var circle_stroke = 1.5
 var titleHeader = svg.append("g")
     .attr("class","textHeader");
 
+// add primary title bar
 titleHeader.append("rect")
     .attr("class", "textHeader")
     .attr("width", width)
     .attr("height", 20)
     .style("fill", "none");
 
+// amend the title bar with the heading
 titleHeader.append("text")
     .attr("class", "textHeader_title")
     .attr("x", function(d){
@@ -51,7 +58,7 @@ titleHeader.append("text")
     .attr("dominant-baseline", "central")
     .style("font-family", "'Slabo 27px', serif");
 
-// background rectangle within the svg, that resets on click
+// background rectangle within the svg, which resets on click
 svg.append("rect")
     .attr("class", "background")
     .attr("width", width)
@@ -63,15 +70,16 @@ var g = svg.append("g")
     .attr("id", "mapG");
 
 // circle data (TMP)
-var jsonCircles = [
-    { "x_axis": 100, "y_axis": 30, "radius": radius, "color" : "blue", "img" : "https://cdn.civil.services/senate/headshots/512x512/tammy-baldwin.jpg" },
-    { "x_axis": -100, "y_axis": 100, "radius": radius, "color" : "red", "img" : "https://cdn.civil.services/senate/headshots/512x512/ron-johnson.jpg"}];
+//var jsonCircles = [
+//    { "x_axis": 100, "y_axis": 30, "radius": radius, "color" : "blue", "img" : "https://cdn.civil.services/senate/headshots/512x512/tammy-baldwin.jpg" },
+//    { "x_axis": -100, "y_axis": 100, "radius": radius, "color" : "red", "img" : "https://cdn.civil.services/senate/headshots/512x512/ron-johnson.jpg"}];
 
+// arrange primary zooming function
 svg
 //    .call(zoom) // uncomment this line to enable free zooming
     .call(zoom.event);
 
-// bring json map into django - N.B. hardcoded location
+// bring in json map - N.B.: hardcoded location
 d3.json("/static/us.json", function(error, us) { 
     if (error) throw error;
 
@@ -80,6 +88,7 @@ d3.json("/static/us.json", function(error, us) {
 	.enter().append("path")
 	.attr("d", path)
 	.attr("class", "feature")
+    	.attr("id", function (d) { return d.id; })
 	.on("click", clicked);
 
     g.append("path")
