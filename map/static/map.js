@@ -1,7 +1,7 @@
 // set primary dimensions
 var width = 1200,
-    height = 750,
     radius = 80,
+    height = 750,
     active = d3.select(null);
     activesen = d3.select(null);
 
@@ -69,10 +69,11 @@ svg.append("rect")
 var g = svg.append("g")
     .attr("id", "mapG");
 
-// circle data (TMP)
-//var jsonCircles = [
-//    { "x_axis": 100, "y_axis": 30, "radius": radius, "color" : "blue", "img" : "https://cdn.civil.services/senate/headshots/512x512/tammy-baldwin.jpg" },
-//    { "x_axis": -100, "y_axis": 100, "radius": radius, "color" : "red", "img" : "https://cdn.civil.services/senate/headshots/512x512/ron-johnson.jpg"}];
+// bring in the json that has headshot urls keyed to states, opensecrets IDs, and parties
+var circleHeadshots; // global
+d3.json("/static/headshots.json", function(data) {
+    circleHeadshots = data;
+});
 
 // arrange primary zooming function
 svg
@@ -88,7 +89,7 @@ d3.json("/static/us.json", function(error, us) {
 	.enter().append("path")
 	.attr("d", path)
 	.attr("class", "feature")
-    	.attr("id", function (d) { return d.id; })
+    	.attr("state_id", function (d) { return d.id; })
 	.on("click", clicked);
 
     g.append("path")
@@ -121,11 +122,26 @@ function clicked(d) {
         .duration(1250) // duration from "off" to "on"
         .call(zoom.translate(translate).scale(scale).event);
 
+    // get the current state id into a var
+//    var state_id = this.attr('state_id');
+    
+    // subset the full senator headshot json to the working state (2 senators)
+    var nodeHeadshots = circleHeadshots.filter(function(d) { return d.d3_id == active[0][0].getAttribute('state_id'); });
+
+    // specify the location of the circles
+    nodeHeadshots[0]["y_axis"] = 30;
+    nodeHeadshots[1]["y_axis"] = 100;
+    nodeHeadshots[0]["x_axis"] = 100;
+    nodeHeadshots[1]["x_axis"] = -100;
+    nodeHeadshots[0]["radius"] = radius;
+    nodeHeadshots[1]["radius"] = radius;
+    
+    
     // add grouped objects for all of the nodes (two per state, one per senator)
     var node = d3.select("#mapG").append("g")
 	.attr("class", "nodes_box")
 	.selectAll(".node")
-	.data(jsonCircles)
+       	.data(nodeHeadshots)
 	.enter().append("g")
 	.attr("class", "node")
 	.attr("cx", function(d) {
@@ -143,7 +159,18 @@ function clicked(d) {
         .attr("cy", y)
         .attr("r", function (d) { return d.radius / scale; })
 	.attr("class", "senate_center")
-        .style("stroke", function(d) { return d.color; })
+	.attr("stroke", function(d) {
+	    return d.color;
+	})
+	.attr("senator_name", function(d) {
+	    return d.name;
+	})
+	.attr("opensecrets", function(d) {
+	    return d.opensecrets;
+	})
+	.attr("state_abbr", function(d) {
+	    return d.state_code;
+	})
     	.style("fill", "none")
 
     // add the clipping circle- slightly smaller than the above to keep the full stroke width
@@ -160,7 +187,7 @@ function clicked(d) {
     // add the image link from the json and clip it
     node.append("svg:image")
 	.attr("class", "circle")
-	.attr("xlink:href", d => d.img)
+	.attr("xlink:href", d => "/static/headshots/" + d.fn)
 	.attr("clip-path", function(d, i) {
 	    return "url(#clip" + i + ")"
 	})

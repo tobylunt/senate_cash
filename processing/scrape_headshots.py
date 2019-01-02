@@ -138,7 +138,7 @@ print(json.dumps(parsed, indent=4, sort_keys=True))
 len(parsed)
 
 # cut this down to only attributes we want to retain
-keys = ['state_code', 'name', 'opensecrets', 'photo_url']
+keys = ['state_code', 'name', 'opensecrets', 'photo_url', 'party']
 trunc = [{ key: parsed[i][key] for key in keys } for i in range(len(parsed))]
 
 # inspect visually
@@ -186,8 +186,8 @@ def imgDownload(url, file_name):
 p = [imgDownload(trunc[i]['photo_url'], headshotFolder + '/' + trunc[i]['opensecrets'] + '.jpg') for i in range(len(trunc))]
 del p
 
-# trim the json further - only need osid and state code in the web app
-keys = ['state_code', 'opensecrets']
+# trim the json further - don't need photo_url anymore
+keys = ['state_code', 'opensecrets', 'party', 'name']
 trunc = [{ key: parsed[i][key] for key in keys } for i in range(len(parsed))]
 
 # however - we also need to add the state ID from the us.json blob
@@ -251,6 +251,16 @@ for id, stub in stubs_ids.items():
     for entry in trunc:
         if stub == entry['state_code']:
             entry['d3_id'] = id
+
+# we also want to construct jpg filenames from the OSID - this is how we named our jpgs - as well as defining the party color
+for entry in trunc:
+    if entry['party'] == 'republican':
+        entry['color'] = 'red'
+    if entry['party'] == 'democrat':
+        entry['color'] = 'blue'
+    if entry['party'] == 'independent':
+        entry['color'] = 'gray'
+    entry['fn'] = entry['opensecrets'] + '.jpg'
 
 # save opensecrets ID, state code, and d3_id to a new json in map/static/
 with open('headshots.json', 'w') as outfile:
