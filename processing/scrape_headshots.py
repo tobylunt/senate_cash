@@ -256,10 +256,13 @@ for id, stub in stubs_ids.items():
 for entry in trunc:
     if entry['party'] == 'republican':
         entry['color'] = 'red'
+        entry['tag'] = 'R - ' + entry['state_code']
     if entry['party'] == 'democrat':
         entry['color'] = 'blue'
+        entry['tag'] = 'D - ' + entry['state_code']
     if entry['party'] == 'independent':
         entry['color'] = 'gray'
+        entry['tag'] = 'I - ' + entry['state_code']
     entry['fn'] = entry['opensecrets'] + '.jpg'
 
 # save opensecrets ID, state code, and d3_id to a new json in map/static/

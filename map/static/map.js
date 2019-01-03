@@ -122,9 +122,6 @@ function clicked(d) {
         .duration(1250) // duration from "off" to "on"
         .call(zoom.translate(translate).scale(scale).event);
 
-    // get the current state id into a var
-//    var state_id = this.attr('state_id');
-    
     // subset the full senator headshot json to the working state (2 senators)
     var nodeHeadshots = circleHeadshots.filter(function(d) { return d.d3_id == active[0][0].getAttribute('state_id'); });
 
@@ -133,10 +130,51 @@ function clicked(d) {
     nodeHeadshots[1]["y_axis"] = 100;
     nodeHeadshots[0]["x_axis"] = 100;
     nodeHeadshots[1]["x_axis"] = -100;
+    nodeHeadshots[0]["float"] = "start";
+    nodeHeadshots[1]["float"] = "end";
     nodeHeadshots[0]["radius"] = radius;
     nodeHeadshots[1]["radius"] = radius;
     
-    
+    // initialize a group for holding senator name and tag
+    var senator_txt = d3.select("#mapG").append("g")
+	.attr("class", "nodes_txt")
+	.selectAll(".node")
+       	.data(nodeHeadshots)
+	.enter().append("g")
+	.attr("class", "node");
+
+    // add the Senator's name in a text box beneath the avatar
+    senator_txt.append("text")
+        .attr("x", function (d) { return .2 * d.x_axis / scale + x; })
+        .attr("y", y + 1.5 * radius / scale)
+	.attr("font-family", "sans-serif")
+    	.attr("font-size", d => (40 / scale) + "px")
+    	.attr("text-anchor", d => d.float)
+	.style("fill", "#e5e1d8")
+	.style("font-family", "'Slabo 27px', serif")
+	.style("paint-order", "stroke")
+	.style("stroke", "#000000")
+	.style("stroke-width", "0.3px")
+	.style("stroke-linecap", "butt")
+	.style("stroke-linejoin", "miter")
+	.text(d => d.name);
+
+    // add the Senator's tag below that (e.g. D-WI)
+    senator_txt.append("text")
+        .attr("x", function (d) { return .2 * d.x_axis / scale + x; })
+        .attr("y", y + 2 * radius / scale)
+	.attr("font-family", "sans-serif")
+    	.attr("font-size", d => (30 / scale) + "px")
+    	.attr("text-anchor", d => d.float)
+	.style("fill", "#e5e1d8")
+	.style("font-family", "'Slabo 27px', serif")
+	.style("paint-order", "stroke")
+	.style("stroke", "#000000")
+	.style("stroke-width", "0.3px")
+	.style("stroke-linecap", "butt")
+	.style("stroke-linejoin", "miter")
+	.text(d => d.tag);
+
     // add grouped objects for all of the nodes (two per state, one per senator)
     var node = d3.select("#mapG").append("g")
 	.attr("class", "nodes_box")
@@ -171,7 +209,7 @@ function clicked(d) {
 	.attr("state_abbr", function(d) {
 	    return d.state_code;
 	})
-    	.style("fill", "none")
+    	.style("fill", "none");
 
     // add the clipping circle- slightly smaller than the above to keep the full stroke width
     node.append("clipPath")
@@ -204,6 +242,26 @@ function clicked(d) {
 	    return d.radius / scale * 2;
 	});
 
+//    // add the Senator's name in a text box beneath the avatar
+//    node.append("text")
+//        .attr("x", function (d) { return .2 * d.x_axis / scale + x; })
+//        .attr("y", y + 1.5 * radius / scale)
+//	.attr("font-family", "sans-serif")
+////    	.attr("font-size", "20px")
+////	.attr("text-anchor", end)
+//    	.attr("text-anchor", d => d.float)
+//	.text(d => d.name);
+//
+//    // add the Senator's tag below that (e.g. D-WI)
+//    node.append("text")
+//        .attr("x", function (d) { return .2 * d.x_axis / scale + x; })
+//        .attr("y", y + 2.2 * radius / scale)
+//	.attr("font-family", "sans-serif")
+////    	.attr("font-size", "20px")
+////	.attr("text-anchor", end)
+//    	.attr("text-anchor", d => d.float)
+//	.text(d => d.tag);
+
     // fade in the senator circles
     g.selectAll(".node")
 	.transition()
@@ -217,6 +275,7 @@ function clicked(d) {
 	.delay(function(d){ return 400; })
         .duration(600)
         .style("opacity", 0); 
+
 }
 
 // unclick function for states
@@ -229,8 +288,10 @@ function reset() {
 	.duration(1250) 
 	.call(zoom.translate([0, 0]).scale(1).event);
 
-//    g.selectAll("circle")
+    // remove senator avatars and labels on unzoom
     g.selectAll(".nodes_box")
+	.remove();
+    g.selectAll(".nodes_txt")
 	.remove();
 
     // make title card readable again
@@ -333,8 +394,6 @@ function createSunburst(json) {
     svgSunburst.append("circle")
 	.attr("cy", active_avatar.cy)
 	.attr("cx", active_avatar.cx)
-    //    	.attr("r", active_avatar.r + Math.sqrt(active_avatar.r) + Math.sqrt(Math.sqrt(active_avatar.r)))
-//        .attr("r", active_avatar.r)
     	.attr("r", 20) 
         .attr("opacity", 0)
     	.attr("id", "bgCirc")
