@@ -105,6 +105,8 @@ function clicked(d) {
     if (active.node() === this) return reset(); // resets when you click on an active state
     g.selectAll(".nodes_box") // this makes the circles over a previously active state disappear when a new state is clicked
         .remove()
+    g.selectAll(".nodes_txt") // same for labels
+        .remove()
     active.classed("active", false); // this makes any other clicked state inactive when a new state is clicked
     active = d3.select(this).classed("active", true); // add "active" class to this selection, and store in reference named "active"
 
@@ -141,6 +143,7 @@ function clicked(d) {
 	.selectAll(".node")
        	.data(nodeHeadshots)
 	.enter().append("g")
+        .style("opacity", 0)
 	.attr("class", "node");
 
     // add the Senator's name in a text box beneath the avatar
