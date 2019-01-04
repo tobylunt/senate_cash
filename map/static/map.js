@@ -393,14 +393,14 @@ function createSunburst(json) {
         .on("mouseover", mouseleave) // clear opacity and breadcrumbs
         .on("click", sunburstRemove); // clear the SVG entirely on background click
 
-    // add a background transparent circle to the SVG for onclick but WITHOUT mouseleave
-    svgSunburst.append("circle")
-	.attr("cy", active_avatar.cy)
-	.attr("cx", active_avatar.cx)
-    	.attr("r", 20) 
-        .attr("opacity", 0)
-    	.attr("id", "bgCirc")
-        .on("click", sunburstRemove); // clear the SVG entirely on background click
+//    // add a background transparent circle to the SVG for onclick but WITHOUT mouseleave
+//    svgSunburst.append("circle")
+//	.attr("cy", active_avatar.cy)
+//	.attr("cx", active_avatar.cx)
+//    	.attr("r", 20) 
+//        .attr("opacity", 0)
+//    	.attr("id", "bgCirc")
+//        .on("click", sunburstRemove); // clear the SVG entirely on background click
 
     // helper function for killing sunburst SVG
     function sunburstRemove() {
