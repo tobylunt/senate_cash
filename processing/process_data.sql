@@ -211,6 +211,54 @@ CREATE INDEX ON pac_records (committee_id);
 
 
 
+-- exploration sandbox
+SELECT * FROM candidates LIMIT 1;
+SELECT * FROM committees LIMIT 1;
+SELECT * FROM individual_contributions LIMIT 2;
+SELECT * FROM industry_codes LIMIT 5; -- first row looks off
+SELECT * FROM pac_records LIMIT 1;
+SELECT * FROM pac_to_pacs LIMIT 1;
+SELECT * FROM pacs LIMIT 1;
+SELECT * FROM politicians LIMIT 1;
+
+
+-- in individual_contributions, candidate is keyed to recipient_id. in candidates, it's cid.
+-- in individual_contributions, the industry ID is in real_code. in industry_codes, it's category_code
+
+SELECT * FROM committees WHERE recip_id = 'C00000059';
+SELECT count(*) FROM individual_contributions WHERE committee_id = 'C00000059';
+SELECT max(amount) FROM individual_contributions;
+SELECT * FROM individual_contributions where amount = 50000000;
+SELECT count(*) FROM individual_contributions where amount > 1000000;
+SELECT count(*) FROM individual_contributions where real_code = 'A0000';
+
+SELECT * FROM industry_codes where category_code = 'Z9000';
+SELECT count(*) FROM industry_codes where industry_name = 'Candidate Self-finance';
+SELECT count(*) FROM industry_codes where sector = 'Candidate';
+
+SELECT * FROM industry_codes where category_code = 'A0000';
+SELECT * FROM industry_codes where industry_code = 'A01';
+SELECT count(*) FROM industry_codes where sector = 'Agribusiness';
+
+-- tiers in industries are: category_code < industry_code < sector, keyed on category_code
+SELECT count(*) AS tot_count FROM industry_codes;
+SELECT COUNT(DISTINCT category_code) AS ic_distinct FROM industry_codes;
+
+-- create a view merging together industries with contribs
+CREATE VIEW contr_cand_indus AS
+SELECT
+  cand.cid, cand.first_last_party, cand.dist_id_run_for, contr.recipient_id, contr.amount, indus.category_code, indus.category_name, indus.industry_code, indus.industry_name,
+FROM
+  candidates cand
+  LEFT JOIN individual_contributions contr ON cand.cid = contr.recipient_id;
+  LEFT JOIN industry_codes indus ON contr.real_code = indus.category_code;
+
+SELECT count(*) from contr_cand_indus;
+
+SELECT * FROM candidates LIMIT 1;
+SELECT * FROM individual_contributions LIMIT 1;
+SELECT * FROM industry_codes LIMIT 2; -- first row looks off
+
 
 
 
