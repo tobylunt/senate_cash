@@ -253,14 +253,24 @@ FROM
   LEFT JOIN individual_contributions contr ON cand.cid = contr.recipient_id;
   LEFT JOIN industry_codes indus ON contr.real_code = indus.category_code;
 
+-- query the view. just get counts
 SELECT count(*) from contr_cand_indus;
+SELECT * from contr_cand_indus LIMIT 1;
+SELECT COUNT(DISTINCT first_last_party) AS pol FROM contr_cand_indus;
+SELECT DISTINCT first_last_party AS pol, cid FROM contr_cand_indus FETCH FIRST 5 ROWS ONLY;
+
+-- examine a single politician a bit - find Kamala Harris
+SELECT * FROM candidates WHERE first_last_party LIKE 'Kamala%';
+SELECT SUM(amount) total FROM contr_cand_indus WHERE cid = 'N00036915';
+
+
 
 SELECT * FROM candidates LIMIT 1;
 SELECT * FROM individual_contributions LIMIT 1;
 SELECT * FROM industry_codes LIMIT 2; -- first row looks off
 
 
-
+SELECT cid, first_last_party FROM candidates LIMIT 30;
 
 
 
