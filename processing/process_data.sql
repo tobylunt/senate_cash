@@ -258,20 +258,94 @@ SELECT count(*) from contr_cand_indus;
 SELECT COUNT(DISTINCT first_last_party) AS pol FROM contr_cand_indus;
 SELECT DISTINCT first_last_party AS pol, cid FROM contr_cand_indus FETCH FIRST 5 ROWS ONLY;
 
+-- generate another view with only the unique names and cids for each
+-- candidate in the candidates table
+CREATE VIEW cand_unique AS
+SELECT
+  DISTINCT cid, first_last_party
+FROM
+  candidates;
+
 -- examine a single politician a bit - find Kamala Harris
 SELECT * FROM candidates WHERE first_last_party LIKE 'Kamala%';
-SELECT SUM(amount) total FROM contr_cand_indus WHERE cid = 'N00036915';
-SELECT SUM(amount) total FROM contr_cand_indus WHERE cid = 'N00036915' GROUP BY sector;
+SELECT SUM(amount) total, sector, industry_name FROM contr_cand_indus WHERE cid = 'N00036915' GROUP BY sector, industry_name ORDER BY sector, total DESC;
+
+-- single query to json
+select row_to_json(t)
+from (
+  select cid, first_last_party from candidates
+) t;
+
+-- try a nested JSON format
+SELECT row_to_json(t)
+FROM (
+  SELECT cid, first_last_party,
+      (
+      SELECT array_to_json(array_agg(row_to_json(ic)))
+      FROM (
+        SELECT sector, amount
+        FROM contr_cand_indus
+	WHERE cid=cand_unique.cid
+      ) ic
+    ) AS children
+  FROM cand_unique
+WHERE cid = 'N00035294'
+) t;
+
+-- try double nested
+COPY (
+SELECT row_to_json(a)
+FROM (
+  SELECT cid, first_last_party,
+      (
+      SELECT array_to_json(array_agg(row_to_json(b)))
+      FROM (
+        SELECT sector,
+            (
+            SELECT array_to_json(array_agg(row_to_json(c)))
+            FROM (
+              SELECT industry_name, amount
+              FROM contr_cand_indus
+        	WHERE cid=cand_unique.cid 
+            ) c
+        ) AS children
+        FROM contr_cand_indus
+	WHERE cid=cand_unique.cid
+      ) b
+    ) AS children
+  FROM cand_unique
+WHERE cid = 'N00035294'
+) a) TO '/Users/tobiaslunt/Desktop/test.json';
+
+-- copy single nested to .json file
+COPY (
+SELECT row_to_json(t)
+FROM (
+  SELECT cid, first_last_party,
+      (
+      SELECT array_to_json(array_agg(row_to_json(ic)))
+      FROM (
+        SELECT sector, amount
+        FROM contr_cand_indus
+	WHERE cid=cand_unique.cid
+      ) ic
+    ) AS children
+  FROM cand_unique
+WHERE cid = 'N00035294'
+) t) TO '/Users/tobiaslunt/Desktop/test.json';
 
 
 SELECT * FROM candidates LIMIT 1;
 SELECT * FROM individual_contributions LIMIT 1;
 SELECT * FROM industry_codes LIMIT 2; -- first row looks off
 SELECT * from contr_cand_indus LIMIT 1;
+SELECT * from contr_cand_indus where cid = 'N00040617'; -- 4 rows
+SELECT count(*) from contr_cand_indus where cid = 'N00035294'; -- 62 rows
+SELECT count(*) from contr_cand_indus where cid = 'N00036915'; -- kamala harris 60k
 
 
-
-
+SELECT * FROM candidates WHERE cid = 'N00035294';
+SELECT * FROM cand_unique WHERE cid = 'N00035294';
 
 
 
@@ -280,3 +354,6 @@ SELECT * from contr_cand_indus LIMIT 1;
 
 -- exit
 \q
+
+
+
