@@ -317,6 +317,100 @@ FROM (
 WHERE cid = 'N00035294'
 ) a) TO '/Users/tobiaslunt/Desktop/test.json';
 
+
+
+
+
+
+
+-- generate view with distinct sectors by candidate
+CREATE VIEW cand_sectors AS
+SELECT
+  DISTINCT sector, cid
+FROM
+  contr_cand_indus
+GROUP BY cid, sector;
+
+-- generate view with total amounts aggregated to industry (for 2-tier testing) - industry code, industry name, and amount
+CREATE VIEW industry_amounts AS
+SELECT
+  sector, industry_code, industry_name, sum(amount) amount
+FROM
+  contr_cand_indus
+GROUP BY sector, industry_code, industry_name;
+
+-- generate view with total amounts aggregated to category_code (for final 3-tier json)
+
+-- generate view with distinct industries by sector - sector code, industry code, industry name - (for 3-tier json)
+
+
+
+-------------------------------
+-- Create nested JSON format --
+-------------------------------
+
+-- for some cood ideas, see https://stackoverflow.com/questions/42222968/create-nested-json-from-sql-query-postgres-9-4
+
+-- generate industry-level amounts for Greg Duke (N00035294)
+COPY(
+select
+json_build_object(
+    'senators', json_agg(
+        json_build_object(
+            'cid', cu.cid,
+            'first_last_party', cu.first_last_party,	
+            'sectors', sectors
+        )
+    )
+) senators
+from cand_short cu -- cand_short just has cid and first_last_party for Greg Duke
+left join (
+select 
+    cid,
+    json_agg(
+        json_build_object(
+            'sector', s.sector,    
+            'industries', industries
+            )
+        ) sectors
+from cand_sectors s -- cand_sectors is a view that just has cid and sector (for all candidates)
+left join (
+    select 
+        sector, 
+        json_agg(
+            json_build_object(
+                'industry_name', i.industry_name,
+                'amount', i.amount
+            )
+        ) industries
+    from industry_amounts i -- industry_amounts has total contributions (amount) by industry_code/name for each sector
+    group by 1
+) i on s.sector = i.sector
+group by cid
+) s on cu.cid = s.cid
+) TO '/Users/tobiaslunt/Desktop/test2.json';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 -- copy single nested to .json file
 COPY (
 SELECT row_to_json(t)
@@ -347,6 +441,12 @@ SELECT count(*) from contr_cand_indus where cid = 'N00036915'; -- kamala harris 
 SELECT * FROM candidates WHERE cid = 'N00035294';
 SELECT * FROM cand_unique WHERE cid = 'N00035294';
 
+CREATE VIEW cand_short AS
+SELECT
+  DISTINCT cid, first_last_party
+FROM
+  candidates
+WHERE cid = 'N00035294';
 
 
 
