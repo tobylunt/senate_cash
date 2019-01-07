@@ -1,4 +1,4 @@
--- much of this code has been adapted from Solomon's repo on getting opensecrets data into Postgres. thanks!
+-- much of this loading code has been adapted from Solomon's repo on getting opensecrets data into Postgres. thanks!
 -- https://github.com/Solomon/opensecrets_to_postgres
 
 -- turn on timing
@@ -204,126 +204,29 @@ CREATE INDEX ON candidates (cycle);
 CREATE INDEX ON pac_records (committee_id);
 
 
+---------------------------
+-- Basic tabular queries --
+---------------------------
 
-
-
-
-
-
-
--- exploration sandbox
+-- check out what we've got a little bit
 SELECT * FROM candidates LIMIT 1;
 SELECT * FROM committees LIMIT 1;
 SELECT * FROM individual_contributions LIMIT 2;
-SELECT * FROM industry_codes LIMIT 5; -- first row looks off
+SELECT * FROM industry_codes LIMIT 5; -- first row looks off, nbd
 SELECT * FROM pac_records LIMIT 1;
 SELECT * FROM pac_to_pacs LIMIT 1;
 SELECT * FROM pacs LIMIT 1;
 SELECT * FROM politicians LIMIT 1;
 
 
--- in individual_contributions, candidate is keyed to recipient_id. in candidates, it's cid.
--- in individual_contributions, the industry ID is in real_code. in industry_codes, it's category_code
 
-SELECT * FROM committees WHERE recip_id = 'C00000059';
-SELECT count(*) FROM individual_contributions WHERE committee_id = 'C00000059';
-SELECT max(amount) FROM individual_contributions;
-SELECT * FROM individual_contributions where amount = 50000000;
-SELECT count(*) FROM individual_contributions where amount > 1000000;
-SELECT count(*) FROM individual_contributions where real_code = 'A0000';
+----------------------------------------
+-- Prep views for nested JSON formats --
+----------------------------------------
 
-SELECT * FROM industry_codes where category_code = 'Z9000';
-SELECT count(*) FROM industry_codes where industry_name = 'Candidate Self-finance';
-SELECT count(*) FROM industry_codes where sector = 'Candidate';
+-- these are exploratory. drop if desired
 
-SELECT * FROM industry_codes where category_code = 'A0000';
-SELECT * FROM industry_codes where industry_code = 'A01';
-SELECT count(*) FROM industry_codes where sector = 'Agribusiness';
-
--- tiers in industries are: category_code < industry_code < sector, keyed on category_code
-SELECT count(*) AS tot_count FROM industry_codes;
-SELECT COUNT(DISTINCT category_code) AS ic_distinct FROM industry_codes;
-
--- create a view merging together industries with contribs
-CREATE VIEW contr_cand_indus AS
-SELECT
-  cand.cid, cand.first_last_party, cand.dist_id_run_for, contr.recipient_id, contr.amount, indus.category_code, indus.category_name, indus.industry_code, indus.industry_name, indus.sector
-FROM
-  candidates cand
-  LEFT JOIN individual_contributions contr ON cand.cid = contr.recipient_id
-  LEFT JOIN industry_codes indus ON contr.real_code = indus.category_code;
-
--- query the view. just get counts
-SELECT count(*) from contr_cand_indus;
-SELECT COUNT(DISTINCT first_last_party) AS pol FROM contr_cand_indus;
-SELECT DISTINCT first_last_party AS pol, cid FROM contr_cand_indus FETCH FIRST 5 ROWS ONLY;
-
--- generate another view with only the unique names and cids for each
--- candidate in the candidates table
-CREATE VIEW cand_unique AS
-SELECT
-  DISTINCT cid, first_last_party
-FROM
-  candidates;
-
--- examine a single politician a bit - find Kamala Harris
-SELECT * FROM candidates WHERE first_last_party LIKE 'Kamala%';
-SELECT SUM(amount) total, sector, industry_name FROM contr_cand_indus WHERE cid = 'N00036915' GROUP BY sector, industry_name ORDER BY sector, total DESC;
-
--- single query to json
-select row_to_json(t)
-from (
-  select cid, first_last_party from candidates
-) t;
-
--- try a nested JSON format
-SELECT row_to_json(t)
-FROM (
-  SELECT cid, first_last_party,
-      (
-      SELECT array_to_json(array_agg(row_to_json(ic)))
-      FROM (
-        SELECT sector, amount
-        FROM contr_cand_indus
-	WHERE cid=cand_unique.cid
-      ) ic
-    ) AS children
-  FROM cand_unique
-WHERE cid = 'N00035294'
-) t;
-
--- try double nested
-COPY (
-SELECT row_to_json(a)
-FROM (
-  SELECT cid, first_last_party,
-      (
-      SELECT array_to_json(array_agg(row_to_json(b)))
-      FROM (
-        SELECT sector,
-            (
-            SELECT array_to_json(array_agg(row_to_json(c)))
-            FROM (
-              SELECT industry_name, amount
-              FROM contr_cand_indus
-        	WHERE cid=cand_unique.cid 
-            ) c
-        ) AS children
-        FROM contr_cand_indus
-	WHERE cid=cand_unique.cid
-      ) b
-    ) AS children
-  FROM cand_unique
-WHERE cid = 'N00035294'
-) a) TO '/Users/tobiaslunt/Desktop/test.json';
-
-
-
-
-
-
-
--- generate view with distinct sectors by candidate
+-- (1) generate view with distinct sectors by candidate
 CREATE VIEW cand_sectors AS
 SELECT
   DISTINCT sector, cid
@@ -331,7 +234,7 @@ FROM
   contr_cand_indus
 GROUP BY cid, sector;
 
--- generate view with total amounts aggregated to industry (for 2-tier testing) - industry code, industry name, and amount
+-- (2) generate view with total amounts aggregated to industry (for 2-tier testing) - industry code, industry name, and amount
 CREATE VIEW industry_amounts AS
 SELECT
   sector, industry_code, industry_name, sum(amount) amount
@@ -339,121 +242,45 @@ FROM
   contr_cand_indus
 GROUP BY sector, industry_code, industry_name;
 
--- generate view with total amounts aggregated to category_code (for final 3-tier json)
-
--- generate view with distinct industries by sector - sector code, industry code, industry name - (for 3-tier json)
-
-
-
--------------------------------
--- Create nested JSON format --
--------------------------------
-
--- for some cood ideas, see https://stackoverflow.com/questions/42222968/create-nested-json-from-sql-query-postgres-9-4
-
--- generate industry-level amounts for Greg Duke (N00035294)
-COPY(
-select
-json_build_object(
-    'senators', json_agg(
-        json_build_object(
-            'cid', cu.cid,
-            'first_last_party', cu.first_last_party,	
-            'sectors', sectors
-        )
-    )
-) senators
-from cand_short cu -- cand_short just has cid and first_last_party for Greg Duke
-left join (
-select 
-    cid,
-    json_agg(
-        json_build_object(
-            'sector', s.sector,    
-            'industries', industries
-            )
-        ) sectors
-from cand_sectors s -- cand_sectors is a view that just has cid and sector (for all candidates)
-left join (
-    select 
-        sector, 
-        json_agg(
-            json_build_object(
-                'industry_name', i.industry_name,
-                'amount', i.amount
-            )
-        ) industries
-    from industry_amounts i -- industry_amounts has total contributions (amount) by industry_code/name for each sector
-    group by 1
-) i on s.sector = i.sector
-group by cid
-) s on cu.cid = s.cid
-) TO '/Users/tobiaslunt/Desktop/test2.json';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- copy single nested to .json file
-COPY (
-SELECT row_to_json(t)
-FROM (
-  SELECT cid, first_last_party,
-      (
-      SELECT array_to_json(array_agg(row_to_json(ic)))
-      FROM (
-        SELECT sector, amount
-        FROM contr_cand_indus
-	WHERE cid=cand_unique.cid
-      ) ic
-    ) AS children
-  FROM cand_unique
-WHERE cid = 'N00035294'
-) t) TO '/Users/tobiaslunt/Desktop/test.json';
-
-
-SELECT * FROM candidates LIMIT 1;
-SELECT * FROM individual_contributions LIMIT 1;
-SELECT * FROM industry_codes LIMIT 2; -- first row looks off
-SELECT * from contr_cand_indus LIMIT 1;
-SELECT * from contr_cand_indus where cid = 'N00040617'; -- 4 rows
-SELECT count(*) from contr_cand_indus where cid = 'N00035294'; -- 62 rows
-SELECT count(*) from contr_cand_indus where cid = 'N00036915'; -- kamala harris 60k
-
-
-SELECT * FROM candidates WHERE cid = 'N00035294';
-SELECT * FROM cand_unique WHERE cid = 'N00035294';
-
-CREATE VIEW cand_short AS
+-- (3) generate view with total amounts aggregated to category_code BY CID (for final 3-tier json)
+CREATE VIEW category_amounts AS
 SELECT
-  DISTINCT cid, first_last_party
+  cid, industry_code, category_code, category_name, sum(amount) amount
 FROM
-  candidates
-WHERE cid = 'N00035294';
+  contr_cand_indus
+WHERE cid = 'N00035294'
+GROUP BY cid, industry_code, category_code, category_name;
+
+-- (4) generate view with distinct industries by sector - sector code, industry code, industry name - (for 3-tier json)
+CREATE VIEW sector_industries AS
+SELECT
+  DISTINCT sector, industry_code, industry_name
+FROM
+  contr_cand_indus
+GROUP BY sector, industry_code, industry_name;
 
 
+---------------------------------------------------------
+-- Write out key view to CSV for nested dict in python --
+---------------------------------------------------------
 
--- commit
+-- create view for selection that gets what we want in the appropriate flat tabular format
+CREATE VIEW pre_json AS
+SELECT cid, sector, industry_name, category_name, SUM(amount)
+FROM contr_cand_indus
+GROUP BY cid, sector, industry_name, category_name
+ORDER BY cid, sector, industry_name, category_name;
+
+-- examine the view
+\x
+SELECT * FROM pre_json LIMIT 4;
+
+-- dump pre_json to CSV for processing in python
+COPY (SELECT * FROM pre_json) TO '/Users/tobiaslunt/Documents/projects/senate_cash/processing/pre_json.csv' WITH (FORMAT CSV, HEADER);
+
+-- remove the relational database. we do not need to save it
+DATABASE DROP contribs
 
 -- exit
 \q
-
-
 

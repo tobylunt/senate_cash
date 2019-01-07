@@ -67,10 +67,17 @@ psql \
 
 psql_exit_status = $?
 
+# check for psql errors
 if [ $psql_exit_status != 0 ]; then
     echo "psql failed while trying to run this sql script" 1>&2
     exit $psql_exit_status
 fi
 
+# if no errors, display message
 echo "sql script successful"
+
+# run the python script converting flattened output table to deeply nested JSON in /maps/static/
+python json_out.py
+
+# exit the script
 exit 0
