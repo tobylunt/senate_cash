@@ -268,6 +268,7 @@ GROUP BY sector, industry_code, industry_name;
 CREATE VIEW pre_json AS
 SELECT cid, sector, industry_name, category_name, SUM(amount)
 FROM contr_cand_indus
+--WHERE cid = 'N00035294' -- for testing - 19 contributions aggregated to the category level
 GROUP BY cid, sector, industry_name, category_name
 ORDER BY cid, sector, industry_name, category_name;
 
