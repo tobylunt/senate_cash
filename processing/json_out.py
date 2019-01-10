@@ -8,7 +8,9 @@ data = pd.read_csv("/Users/tobiaslunt/Documents/projects/senate_cash/processing/
 data.head()
 
 # establish a function to recursively build a nested dict structure
-# over columns, assuming values in rightmost column
+# over columns, assuming values in rightmost column. need to make sure
+# the output JSON has the correct structure, where each nested feature
+# is named "children:"
 def jsonify(df):
     json_out = dict()
     ncols = df.values.shape[1]
