@@ -6,6 +6,18 @@ import os
 import pandas as pd
 
 
+# set csv filename into object
+fn = '/Users/tobiaslunt/Documents/projects/senate_cash/processing/pre_json.csv'
+
+# preprocess the csv. read in data to dataframe
+df = pd.read_csv(fn)
+
+# remove missings. note that negative contributions are returns.
+df = df.dropna()
+
+# overwrite csv
+df.to_csv(fn, index = False)
+
 # establish functions to recursively build a nested dict structure
 # over columns, assuming values in rightmost column. need to make sure
 # the output JSON has the correct structure, where each nested feature
@@ -33,6 +45,7 @@ def build_leaf(name, leaf):
     return res
 
 
+# takes an input dataframe
 def jsonify(fn):
     """ The main thread composed from two parts.
     
@@ -41,16 +54,17 @@ def jsonify(fn):
     json-like structure (via dict).
     
     And the last part is just printing the result.
-    
     """
     tree = ctree()
     
-    # insheet CSV file
+    # insheet csvfile. get fn from input arg
     with open(fn) as csvfile:
-        data = pd.read_csv(fn)
         
-        # enumerate over csv, returning index and row/line
-        for rid, row in enumerate(data):
+        # read in 
+        reader = csv.reader(csvfile)
+        
+        # enumerate over the csv, returning index and row/line
+        for rid, row in enumerate(reader):
             
             # skipping first header row. remove this logic if your csv is
             # headerless
@@ -73,7 +87,7 @@ def jsonify(fn):
 
 
 # process our table. this is dumped from process_data.sql
-j = jsonify('/Users/tobiaslunt/Documents/projects/senate_cash/processing/pre_json.csv')
+j = jsonify(fn)
 
 # dump to final json
 with open("/Users/tobiaslunt/Documents/projects/senate_cash/map/static/contribs.json","w") as f:
