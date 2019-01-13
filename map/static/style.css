@@ -54,7 +54,8 @@ html {
 
 /* sunburst introspection text */
 #introspect text {
-  font-weight: 800;
+    /*     font-size: .8em; */
+  font-weight: 600;
   font-family: "Courier New", Times, serif;
   fill: #e5e1d8;
   text-shadow: #43435f 0px 0px 2px,   #43435f 0px 0px 2px,   #43435f 0px 0px 2px,

@@ -1,7 +1,7 @@
 // set primary dimensions
 var width = 1200,
     radius = 80,
-    height = 750,
+    height = 700,
     active = d3.select(null);
     activesen = d3.select(null);
 
@@ -69,8 +69,46 @@ svg.append("rect")
 var g = svg.append("g")
     .attr("id", "mapG");
 
+// bring in the json that has master aggregated contributions
+var contribs;
+d3.json("/static/contribs.json", function(data) {
+    contribs = data;
+});
+
+// define a function for adding commas to numbers (for displaying funding totals)
+function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+// define a function for scaling text to fit its parent container
+function storeSize(d) {
+
+}
+function getSize(d) {
+  var text_bbox = this.getBBox(),
+      scale = Math.min(350/text_bbox.width, 30/text_bbox.height) * 0.9;
+  d.scale = scale;
+}
+
+// define a function for subsetting the full contribs data to a specific candidate
+function getNodeById(nodes, wantId) {
+    var search = nodes.slice(0);    
+
+    while (node = search.shift()) {
+        if (node.name == wantId) {
+            return node;
+        }
+
+        if (node.children) {
+            search.push.apply(search, node.children);
+        }
+    }
+
+    return false;
+}
+
 // bring in the json that has headshot urls keyed to states, opensecrets IDs, and parties
-var circleHeadshots; // global
+var circleHeadshots;
 d3.json("/static/headshots.json", function(data) {
     circleHeadshots = data;
 });
@@ -322,7 +360,7 @@ function senator_clicked(d) {
     activesen.classed("active_sen", false); // make "activesen" selection inactive - i.e. if you click between two senators in the same state
     inactive_sen = d3.selectAll(".node")
 	.classed("inactive_sen", true)
-	.style("opacity", .1)
+	.style("opacity", .05)
     activesen = d3.select(this)
 	.classed("active_sen", true) // make this selection have "active_sen" class and store selection
 	.classed("inactive_sen", false) // make this selection have "active_sen" class and store selection
@@ -343,13 +381,19 @@ function senator_clicked(d) {
         .duration(600) 
         .call(zoom.translate(sen_translate).scale(sen_scale).event);
 
+    // retrieve opensecrets ID for the clicked senator
+    var active_sen_id = d3.select('.active_sen').select('circle').attr("opensecrets")
+	
+    // get subset of JSON contribs data for this candidate
+    var node = getNodeById(contribs, active_sen_id);
+
     // activate the sunburst
-    createSunburst(root);
+    createSunburst(node);
 }
 
 // Breadcrumb dimension settings
 var b = {
-  w: 200, h: 30, s: 3, t: 10
+  w: 350, h: 30, s: 3, t: 10
 };
 
 // Main function to draw and set up sunburst visualization, passing in json data.
@@ -366,9 +410,9 @@ function createSunburst(json) {
         .range([0, sunradius]);
 
     // set color category
-//    var color = d3.scale.category20c(); // old color scale
-    var brewer = d3.entries(colorbrewer);
-    var palette = brewer[34]; // select the colorbrewer scale we wish - see http://bl.ocks.org/emmasaunders/52fa83767df27f1fc8b3ee2c6d372c74
+    var color = d3.scale.category20c(); // old color scale
+//    var brewer = d3.entries(colorbrewer);
+//    var palette = brewer[34]; // select the colorbrewer scale we wish - see http://bl.ocks.org/emmasaunders/52fa83767df27f1fc8b3ee2c6d372c74
     
     // Basic setup of page elements.
     initializeBreadcrumbTrail();
@@ -390,7 +434,7 @@ function createSunburst(json) {
         .attr("height", height)
         .attr("opacity", 0)
     	.attr("id", "bgRect")
-        .on("mouseover", mouseleave) // clear opacity and breadcrumbs
+//        .on("mouseover", mouseleave) // clear opacity and breadcrumbs
         .on("click", sunburstRemove); // clear the SVG entirely on background click
 
 //    // add a background transparent circle to the SVG for onclick but WITHOUT mouseleave
@@ -429,7 +473,7 @@ function createSunburst(json) {
     // partition the data
     var partition = d3.layout.partition()
         .sort(null)
-        .value(function(d) { return 1; });
+        .value(function(d) { return d.size; });
 
     // set how arcs will be calculated for paths
     var arc = d3.svg.arc()
@@ -471,8 +515,8 @@ function createSunburst(json) {
         .style("stroke", "#232325")
         .style("stroke-width", .2)
         .style("stroke-alignment", "inner")
-//        .style("fill", function(d) { return color(getRootmostAncestorByRecursion(d).name); }) // old colors - using d3 scale
-        .style("fill", function(d,i) { return palette.value[12][getRootmostAncestorByRecursion(d).index] }) // selects colorbrewer colors in order for primary nodes, then gives those colors to all child nodes
+        .style("fill", function(d) { return color(getRootmostAncestorByRecursion(d).name); }) // old colors - using d3 scale
+//        .style("fill", function(d,i) { return palette.value[12][getRootmostAncestorByRecursion(d).index] }) // selects colorbrewer colors in order for primary nodes, then gives those colors to all child nodes
         .style("opacity", 0)
         .on("click", click)
     	.on("mouseover", mouseover) // this creates the breadcrumbs
@@ -491,21 +535,27 @@ function createSunburst(json) {
 	if(d3.select(this).style("opacity") != 0) {
 
 	    // add up all child node sizes with present node for total value at this point in the tree
-    	    var totSum = d.value; 
+    	    var totSum = "$" + numberWithCommas(d.value);
 
+	    // update breadcrumbs with this value and the position in the tree/sunburst
     	    var sequenceArray = getAncestors(d);
 	    updateBreadcrumbs(sequenceArray, totSum);
 
-	    // Fade all the segments by half
+	    // Fade all the segments 
 	    d3.selectAll("path")
-	        .style("opacity", function(d) { return (getNodeDepth(d) / Math.pow(getNodeDepth(d),2)) / 2; })
+	        .style("opacity", function(d) { return (getNodeDepth(d) / Math.pow(getNodeDepth(d),2)) / 4; })
 
-	    // Then highlight only those that are an ancestor of the current segment.
+	    // Then highlight those that are an ancestor of the current segment.
 	    svgSunburst.selectAll("path")
 	        .filter(function(node) {
 	            return (sequenceArray.indexOf(node) >= 0);
 	        })
 	        .style("opacity", 1);
+
+	    // Then restore the opacity cascade of children of the current segment.
+//	    d3.select(this).select("path")
+//		.style("opacity", function(d) { return getNodeDepth(d) == 0 ? 0 : getNodeDepth(d) / Math.pow(getNodeDepth(d),2); }); // make opacity dependent on node depth
+	    //	    	.style("opacity", 1);
 	}
     }
     
@@ -560,9 +610,16 @@ function createSunburst(json) {
     function breadcrumbPoints(d, i) {
 	var points = [];
 	points.push("0,0");
-	points.push(b.w + ",0");
-	points.push(b.w + b.t + "," + (b.h / 2));
-	points.push(b.w + "," + b.h);
+	// rightmost bit (holding values) needs to be smaller
+	if (i == 3) {
+	    var bcwidth = b.w / 3;
+	}
+	else {
+	    var bcwidth = b.w;
+	}
+	points.push(bcwidth + ",0");
+	points.push(bcwidth + b.t + "," + (b.h / 2));
+	points.push(bcwidth + "," + b.h);
 	points.push("0," + b.h);
 	if (i > 0) { // Leftmost breadcrumb; don't include 6th vertex.
             points.push(b.t + "," + (b.h / 2));
@@ -584,17 +641,39 @@ function createSunburst(json) {
 	// color and opacity of the breadcrumbs matches the sunburst
 	entering.append("svg:polygon")
             .attr("points", breadcrumbPoints)
-//            .style("fill", function(d) { return color(getRootmostAncestorByRecursion(d).name); })
-	    .style("fill", function(d) { return palette.value[12][getRootmostAncestorByRecursion(d).index] })
+            .style("fill", function(d) { return color(getRootmostAncestorByRecursion(d).name); })
+//	    .style("fill", function(d) { return palette.value[12][getRootmostAncestorByRecursion(d).index] })
+	    .each(storeSize)
             .style("opacity", function(d) { return getNodeDepth(d) == 0 ? 0 : getNodeDepth(d) / Math.pow(getNodeDepth(d),2); }) // make opacity dependent on node depth
 
-	// position the text centered within each box
-	entering.append("svg:text")
+	// add another svg to contain the text
+//	entering.append("svg")
+////            .attr("preserveAspectRatio", "xMinYMin")
+////            .attr("viewBox", "0 0 800 70")
+//            .attr("width", "100%")
+//            .attr("height", "100%")
+	entering.append("text")
             .attr("x", (b.w + b.t) / 2)
             .attr("y", b.h / 2)
+//            .attr("x", "0%")
+//            .attr("y", "50%")
             .attr("dy", "0.35em")
+//	    .attr("textLength", "20%")
             .attr("text-anchor", "middle")
-            .text(function(d) { return d.name; });
+//            .attr("font-size", "1vw")
+            .text(function(d) { return d.name; })
+	    .style("font-size", "1px")
+	    .each(getSize)
+	    .style("font-size", function(d) { return d.scale + "px"; });
+
+	
+//	// position the text centered within each box
+//	entering.append("svg:text")
+//            .attr("x", (b.w + b.t) / 2)
+//            .attr("y", b.h / 2)
+//            .attr("dy", "0.35em")
+//            .attr("text-anchor", "middle")
+//            .text(function(d) { return d.name; });
 
 	// Set position for entering and updating nodes.
 	g.attr("transform", function(d, i) {
@@ -606,7 +685,7 @@ function createSunburst(json) {
 
 	// Now move and update the sum total at the end.
 	d3.select("#trail").select("#endlabel")
-            .attr("x", (nodeArray.length + 0.5) * (b.w + b.s))
+            .attr("x", (nodeArray.length + 0.5) * ((b.w - 30) + b.s))
             .attr("y", b.h / 2)
             .attr("dy", "0.35em")
             .attr("text-anchor", "middle")
@@ -695,48 +774,48 @@ function createSunburst(json) {
     }
 };
 
-// bring in data
-function getData() {
-    return {
-        "name": "ref",
-        "children": [
-            { "name": "EPIC",
-              "children": [
-                  { "name": "EPIC-a1", "size": 3 },
-                  { "name": "EPIC-a2", "size": 3 }
-              ]
-            },
-	    
-            { "name": "AD",
-              "children": [
-                  { "name": "AD-a1", "size": 3 },
-                  { "name": "AD-a2", "size": 3 }
-              ]
-            },
-
-            { "name": "SAP",
-              "children": [
-                  { "name": "SAP-a1", "size": 3 },
-                  { "name": "SAP-a2", "size": 3 }
-              ]
-            },
-
-            { "name": "Oracle",
-              "children": [
-
-		  { "name": "Oracle-a1", "size": 3 },
-                  { "name": "Oracle-a2", "size": 3,
-                    "children": [
-                        { "name": "EPIC-b1", "size": 3 },
-                        { "name": "EPIC-b2", "size": 3 }
-                    ]
-                  }
-              ]
-            }
-        ]
-    };
-};
-
+//// bring in data
+//function getData() {
+//    return {
+//        "name": "ref",
+//        "children": [
+//            { "name": "EPIC",
+//              "children": [
+//                  { "name": "EPIC-a1", "size": 3 },
+//                  { "name": "EPIC-a2", "size": 3 }
+//              ]
+//            },
+//	    
+//            { "name": "AD",
+//              "children": [
+//                  { "name": "AD-a1", "size": 3 },
+//                  { "name": "AD-a2", "size": 3 }
+//              ]
+//            },
+//
+//            { "name": "SAP",
+//              "children": [
+//                  { "name": "SAP-a1", "size": 3 },
+//                  { "name": "SAP-a2", "size": 3 }
+//              ]
+//            },
+//
+//            { "name": "Oracle",
+//              "children": [
+//
+//		  { "name": "Oracle-a1", "size": 3 },
+//                  { "name": "Oracle-a2", "size": 3,
+//                    "children": [
+//                        { "name": "EPIC-b1", "size": 3 },
+//                        { "name": "EPIC-b2", "size": 3 }
+//                    ]
+//                  }
+//              ]
+//            }
+//        ]
+//    };
+//};
+//
 // bring in json data from above
-root = getData();
+//root = getData();
 
