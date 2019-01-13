@@ -81,9 +81,6 @@ function numberWithCommas(x) {
 }
 
 // define a function for scaling text to fit its parent container
-function storeSize(d) {
-
-}
 function getSize(d) {
   var text_bbox = this.getBBox(),
       scale = Math.min(350/text_bbox.width, 30/text_bbox.height) * 0.9;
