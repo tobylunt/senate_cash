@@ -2,11 +2,7 @@
 
 This repo uses public data to visualize Senatorial campaign contributions in an accessible, transparent, and reproducible way. 
 
-## Acknowledgements
-
-Data are from the Center for Responsive Politics, which assembles and cleans publicly available campaign finance data and makes it available for non-commercial uses through their API and bulk data portal. Thank you. See https://www.opensecrets.org/ for more information.
-
-We also use the Civil Services repo on Senator demography for Senator headshots. See https://github.com/CivilServiceUSA/us-senate.
+![Tammy Baldwin](https://github.com/tobylunt/senate_cash/map/static/tammy.png "Tammy Baldwin")
 
 ## What this repo contains
 
@@ -25,6 +21,27 @@ For a primer on this subject, I recommend an [excellent summary](https://sunligh
 We don't cover PACs, Super PACs, national party disbursements, 527s or the various 501s.
 
 The Citizens United decision cleared the way for unlimited contributions to Super PACs, which can say whatever they want as long as they don't get caught coordinating with a candidate. Super PACs are a huge force in electoral outcomes and are impossible to attribute to specific individuals or interests, due to the ease of routing money through an anonymizing shell corporation. Currently, this analysis does not consider Super PACs.
+
+## How it works
+
+There are many steps to the build:
+
+1) Download full contributions data from Open Secrets (also download pre-processed OS data for examination, but don't end up using it)
+2) Get the contributions data into Postgres tables
+3) Process the data in SQL to provide summaries for each candidate, and export to JSON
+4) Download headshots for all senators
+5) 
+
+
+## What's in this repo
+
+
+
+## Acknowledgements
+
+Data are from the Center for Responsive Politics, which assembles and cleans publicly available campaign finance data and makes it available for non-commercial uses through their API and bulk data portal. Thank you. See https://www.opensecrets.org/ for more information.
+
+We also use the Civil Services repo on Senator demography for Senator headshots. See https://github.com/CivilServiceUSA/us-senate.
 
 ## Get involved
 
