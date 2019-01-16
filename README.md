@@ -1,6 +1,6 @@
 # Senate Cash
 
-This repo uses public data to visualize Senatorial campaign contributions in an accessible, transparent, and reproducible way. This is a complete and functional web app nearing a v1.0 release, but is still a work in progress.
+This repo uses public data to visualize Senatorial campaign contributions in an accessible, transparent, and reproducible way. This is a complete and functional web app nearing a v1.0 release, but is still a work in progress. The web app can be viewed [here](https://senate-cash.herokuapp.com/). Chrome recommended. Note that the app currently visualizes the 2016 contribution cycle; this will be updated as the 2018 data come in.
 
 ![Tammy Baldwin](https://github.com/tobylunt/senate_cash/raw/master/map/static/tammy.png "Tammy Baldwin")
 
