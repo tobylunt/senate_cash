@@ -1,6 +1,6 @@
 # Senate Cash
 
-This repo uses public data to visualize Senatorial campaign contributions in an accessible, transparent, and reproducible way. 
+This repo uses public data to visualize Senatorial campaign contributions in an accessible, transparent, and reproducible way. This is a complete and functional web app nearing a v1.0 release, but is still a work in progress.
 
 ![Tammy Baldwin](https://github.com/tobylunt/senate_cash/raw/master/map/static/tammy.png "Tammy Baldwin")
 
@@ -32,14 +32,15 @@ There are a few steps to the build:
 4) Download headshots for all senators
 5) map.js holds all the the D3, which automatically pairs senators to states, and the data to the appropriate senators for the web app itself.
 
+The bash script `processing/process_data.sh` calls all external .sql and .py scripts required to build the webapp.
 
 ## What's in this repo
 
-The directory structure is as follows:
+The raw directory structure is as follows:
 
 ![Tree](https://github.com/tobylunt/senate_cash/raw/master/map/static/dirtree.png "tree")
 
-`map/static/` has all image files and `.json` blobs that are used as input for the D3. For the scripts that do all the preparatory steps, see `processing/`. 
+`map/static/` has all image files and `.json` blobs that are used as input for the D3. For the scripts that do all the preparatory steps, see `processing/`. The rest of the directory tree is standard Django setup.
 
 ## Acknowledgements
 
@@ -50,8 +51,6 @@ I use the Civil Services repo on Senator demography for Senator headshots. See h
 Data are from the Center for Responsive Politics, which assembles and cleans publicly available campaign finance data and makes it available for non-commercial uses through their API and bulk data portal. Thank you. See https://www.opensecrets.org/ for more information. 
 
 ![OS](https://github.com/tobylunt/senate_cash/raw/master/map/static/opensecrets.png "open secrets")
-
-Thank you.
 
 ## Get involved
 
