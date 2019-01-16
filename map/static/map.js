@@ -280,26 +280,6 @@ function clicked(d) {
 	    return d.radius / scale * 2;
 	});
 
-//    // add the Senator's name in a text box beneath the avatar
-//    node.append("text")
-//        .attr("x", function (d) { return .2 * d.x_axis / scale + x; })
-//        .attr("y", y + 1.5 * radius / scale)
-//	.attr("font-family", "sans-serif")
-////    	.attr("font-size", "20px")
-////	.attr("text-anchor", end)
-//    	.attr("text-anchor", d => d.float)
-//	.text(d => d.name);
-//
-//    // add the Senator's tag below that (e.g. D-WI)
-//    node.append("text")
-//        .attr("x", function (d) { return .2 * d.x_axis / scale + x; })
-//        .attr("y", y + 2.2 * radius / scale)
-//	.attr("font-family", "sans-serif")
-////    	.attr("font-size", "20px")
-////	.attr("text-anchor", end)
-//    	.attr("text-anchor", d => d.float)
-//	.text(d => d.tag);
-
     // fade in the senator circles
     g.selectAll(".node")
 	.transition()
@@ -639,38 +619,18 @@ function createSunburst(json) {
 	entering.append("svg:polygon")
             .attr("points", breadcrumbPoints)
             .style("fill", function(d) { return color(getRootmostAncestorByRecursion(d).name); })
-//	    .style("fill", function(d) { return palette.value[12][getRootmostAncestorByRecursion(d).index] })
-	    .each(storeSize)
             .style("opacity", function(d) { return getNodeDepth(d) == 0 ? 0 : getNodeDepth(d) / Math.pow(getNodeDepth(d),2); }) // make opacity dependent on node depth
 
-	// add another svg to contain the text
-//	entering.append("svg")
-////            .attr("preserveAspectRatio", "xMinYMin")
-////            .attr("viewBox", "0 0 800 70")
-//            .attr("width", "100%")
-//            .attr("height", "100%")
+	// add the text with auto-resize to fit the svg 
 	entering.append("text")
             .attr("x", (b.w + b.t) / 2)
             .attr("y", b.h / 2)
-//            .attr("x", "0%")
-//            .attr("y", "50%")
             .attr("dy", "0.35em")
-//	    .attr("textLength", "20%")
             .attr("text-anchor", "middle")
-//            .attr("font-size", "1vw")
             .text(function(d) { return d.name; })
 	    .style("font-size", "1px")
 	    .each(getSize)
 	    .style("font-size", function(d) { return d.scale + "px"; });
-
-	
-//	// position the text centered within each box
-//	entering.append("svg:text")
-//            .attr("x", (b.w + b.t) / 2)
-//            .attr("y", b.h / 2)
-//            .attr("dy", "0.35em")
-//            .attr("text-anchor", "middle")
-//            .text(function(d) { return d.name; });
 
 	// Set position for entering and updating nodes.
 	g.attr("transform", function(d, i) {
@@ -770,49 +730,3 @@ function createSunburst(json) {
 	};
     }
 };
-
-//// bring in data
-//function getData() {
-//    return {
-//        "name": "ref",
-//        "children": [
-//            { "name": "EPIC",
-//              "children": [
-//                  { "name": "EPIC-a1", "size": 3 },
-//                  { "name": "EPIC-a2", "size": 3 }
-//              ]
-//            },
-//	    
-//            { "name": "AD",
-//              "children": [
-//                  { "name": "AD-a1", "size": 3 },
-//                  { "name": "AD-a2", "size": 3 }
-//              ]
-//            },
-//
-//            { "name": "SAP",
-//              "children": [
-//                  { "name": "SAP-a1", "size": 3 },
-//                  { "name": "SAP-a2", "size": 3 }
-//              ]
-//            },
-//
-//            { "name": "Oracle",
-//              "children": [
-//
-//		  { "name": "Oracle-a1", "size": 3 },
-//                  { "name": "Oracle-a2", "size": 3,
-//                    "children": [
-//                        { "name": "EPIC-b1", "size": 3 },
-//                        { "name": "EPIC-b2", "size": 3 }
-//                    ]
-//                  }
-//              ]
-//            }
-//        ]
-//    };
-//};
-//
-// bring in json data from above
-//root = getData();
-
