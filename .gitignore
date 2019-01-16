@@ -12,6 +12,3 @@ db.sqlite3
 
 # raw data
 raw
-
-# secret django settings
-senate_cash/settings_secret.txt
