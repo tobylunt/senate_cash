@@ -2,7 +2,7 @@
 
 This repo uses public data to visualize Senatorial campaign contributions in an accessible, transparent, and reproducible way. 
 
-![Tammy Baldwin](https://github.com/tobylunt/senate_cash/map/static/tammy.png "Tammy Baldwin")
+![Tammy Baldwin](https://github.com/tobylunt/senate_cash/raw/master/map/static/tammy.png "Tammy Baldwin")
 
 ## What this repo contains
 
