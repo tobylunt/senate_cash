@@ -432,6 +432,10 @@ function createSunburst(json) {
 	activesen = d3.select(null); // remove the activesen selection
 	d3.selectAll(".node").style("opacity", 1); // reset avatars to full opacity
 
+	// Hide the breadcrumb trail
+	d3.select("#trail")
+            .style("visibility", "hidden");
+	
 	// zoom back to center of state
 	var sen_bounds = d3.select('.feature.active').node().getBBox(),
 	    dx = sen_bounds.width, // same as sen_bounds.height, bc circle
