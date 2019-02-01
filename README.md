@@ -7,6 +7,7 @@ The web app can be viewed [here](https://senate-cash.herokuapp.com/). Chrome rec
 Note that the app currently visualizes the 2016 contribution cycle; this will be updated as the 2018 data come in.
 
 ![senate_cash_demo](https://github.com/tobylunt/senate_cash/raw/master/map/static/sc.gif "Demo")
+<img src="https://github.com/tobylunt/senate_cash/raw/master/map/static/sc.gif" width="100%" />
 
 ## What this repo contains
 
